@@ -8,6 +8,7 @@
     "types": ["vite/client"],
     "resolveJsonModule": true,
     "paths": {
+      "@/*": ["./src/*"],
       "@assets/*": ["../backend/assets/*"]
     },
     "erasableSyntaxOnly": true,

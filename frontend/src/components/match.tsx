@@ -8,8 +8,17 @@ import { Teams } from './match/teams';
 import { Minions } from './match/minions';
 import type { MatchDto, MatchNotes, MatchParticipant, MatchState } from '../types/riot';
 
-// layout
-import { Button } from './../layout/button';
+// ui
+import { Button } from '@/ui/button';
+import { Label } from '@/ui/label';
+import { Textarea } from '@/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/ui/select';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3080';
 
@@ -178,20 +187,25 @@ export const Match = (props: MatchProps) => {
                 </div>
               </div>
               <form className='flex flex-col m-auto mt-2 items-center'>
-                <div className='flex flex-row justify-center py-2'>
-                  <label className='px-2 w-20' htmlFor="tags">Category</label>
-                  <select className='w-64' name="tags" id="tags">
-                    <option value="Champion Knowledge">Champion Knowledge</option>
-                    <option value="Laning">Laning</option>
-                    <option value="Team Fighting">Team Fighting</option>
-                    <option value="Macro">Macro</option>
-                  </select>
+                <div className='flex flex-row items-center justify-center py-2'>
+                  <Label className='px-2 w-20' htmlFor="tags">Category</Label>
+                  <Select name="tags" defaultValue="Champion Knowledge">
+                    <SelectTrigger id="tags" className='w-64'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Champion Knowledge">Champion Knowledge</SelectItem>
+                      <SelectItem value="Laning">Laning</SelectItem>
+                      <SelectItem value="Team Fighting">Team Fighting</SelectItem>
+                      <SelectItem value="Macro">Macro</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className='flex flex-row justify-center py-2'>
-                  <label className='px-2 w-20' htmlFor="note">Note</label>
-                  <textarea className='h-20 w-64' name='note' />
+                  <Label className='px-2 w-20 pt-2' htmlFor="note">Note</Label>
+                  <Textarea className='h-20 w-64' name='note' id='note' />
                 </div>
-                <Button>Add Note</Button>
+                <Button type='button'>Add Note</Button>
               </form>
             </div>
           }
