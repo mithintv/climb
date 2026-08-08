@@ -1,10 +1,22 @@
 {
-  "name": "climb",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "start": "pnpm --recursive --parallel start",
-    "start:backend": "pnpm --filter backend start",
-    "start:frontend": "pnpm --filter frontend start"
-  }
+	"name": "climb",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"start": "pnpm --recursive --parallel start",
+		"start:backend": "pnpm --filter backend start",
+		"start:frontend": "pnpm --filter frontend start",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"prepare": "husky"
+	},
+	"lint-staged": {
+		"*": "prettier --write --ignore-unknown"
+	},
+	"devDependencies": {
+		"husky": "^9.1.7",
+		"lint-staged": "^17.3.0",
+		"prettier": "^3.9.6",
+		"prettier-plugin-tailwindcss": "^0.8.1"
+	}
 }

@@ -5,9 +5,6 @@ import { MatchList } from "./match-list";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 
-// backend config
-import { myConfig } from "../config/config";
-
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
 
 const fetchPUUID = async (summonerName: string): Promise<string> => {
@@ -38,7 +35,8 @@ export const SummonerName = () => {
 	const [summonerName, setSummonerName] = useState("");
 	const submitHandler = async (event: FormEvent) => {
 		event.preventDefault();
-		const id = await fetchPUUID(summonerName || myConfig.summonerName);
+		if (!summonerName) return;
+		const id = await fetchPUUID(summonerName);
 		setPuuid(id);
 		const matchHistory = await fetchMatches(id);
 		setShowMatches(matchHistory);
@@ -66,7 +64,7 @@ export const SummonerName = () => {
 					</span>
 					<Input
 						className="h-auto flex-1 border-0 bg-transparent px-3 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:ring-0 dark:bg-transparent"
-						placeholder={`Game Name #Tag (e.g. ${myConfig.summonerName})`}
+						placeholder="Game Name #Tag"
 						value={summonerName}
 						onChange={(e) => setSummonerName(e.target.value)}
 					/>
@@ -79,11 +77,11 @@ export const SummonerName = () => {
 				</form>
 			</div>
 			{hasMatches && (
-				<div className="mt-4 flex flex-col m-auto text-xs">
+				<div className="m-auto mt-4 flex flex-col text-xs">
 					<MatchList
 						puuid={puuid}
 						matches={matches}
-						summonerName={summonerName || myConfig.summonerName}
+						summonerName={summonerName}
 					/>
 				</div>
 			)}
