@@ -4,8 +4,8 @@
 	"private": true,
 	"scripts": {
 		"start": "pnpm --recursive --parallel start",
-		"start:backend": "pnpm --filter backend start",
-		"start:frontend": "pnpm --filter frontend start",
+		"start:backend": "pnpm --filter backend dev",
+		"start:frontend": "pnpm --filter frontend dev",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"prepare": "husky"

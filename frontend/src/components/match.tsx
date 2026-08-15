@@ -102,7 +102,12 @@ export const Match = (props: MatchProps) => {
 					notes: null,
 				});
 			} catch (error) {
-				console.log(error);
+				console.error("Failed to fetch match notes", {
+					matchId: props.id,
+					summonerName: props.summonerName,
+					puuid: props.puuid,
+					error,
+				});
 			}
 		};
 		fetchMatchNotes();
