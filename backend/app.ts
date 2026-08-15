@@ -1,14 +1,14 @@
-import createError, { type HttpError } from "http-errors";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import express, {
+	type NextFunction,
 	type Request,
 	type Response,
-	type NextFunction,
 } from "express";
-import cors from "cors";
+import createError, { type HttpError } from "http-errors";
+import { pinoHttp } from "pino-http";
 
-import cookieParser from "cookie-parser";
-import logger from "morgan";
-
+import { logger } from "./logging/logger.ts";
 import indexRouter from "./routes/index.ts";
 
 const app = express();
@@ -19,7 +19,7 @@ app.use(
 	}),
 );
 
-app.use(logger("dev"));
+app.use(pinoHttp({ logger }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -27,19 +27,21 @@ app.use(cookieParser());
 app.use("/", indexRouter);
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
+app.use((_req, _res, next) => {
 	next(createError(404));
 });
 
 // error handler
-app.use(function (
-	err: HttpError,
-	req: Request,
-	res: Response,
-	next: NextFunction,
-) {
-	res.status(err.status || 500).json({ error: err.message });
+// Express identifies error handlers by arity, so `next` has to stay in the
+// signature even though it is unused.
+app.use((err: HttpError, req: Request, res: Response, _next: NextFunction) => {
+	const status = err.status || 500;
+	req.log.error(
+		{ err, status, method: req.method, url: req.originalUrl },
+		"Request failed: {method} {url} -> {status}",
+	);
+	res.status(status).json({ error: err.message });
 });
 
 const port = Number(process.env.PORT) || 3080;
-app.listen(port, () => console.log(`Listening on port ${port}`));
+app.listen(port, () => logger.info({ port }, "Listening on port {port}"));

@@ -1,10 +1,10 @@
-import express from "express";
 import axios from "axios";
+import express from "express";
 
 import {
-	fetchPUUID,
-	fetchMatchIds,
 	fetchMatchData,
+	fetchMatchIds,
+	fetchPUUID,
 } from "./../controllers/riot.ts";
 
 const errorStatus = (error: unknown) =>

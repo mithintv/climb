@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { hostname } from "node:os";
-import { multistream, pino, type Level, type StreamEntry } from "pino";
-import { PinoSeqStream } from "pino-seq";
+
+import { type Level, multistream, pino, type StreamEntry } from "pino";
 import pretty from "pino-pretty";
+import { PinoSeqStream } from "pino-seq";
 
 const isProduction = process.env.NODE_ENV === "production";
 const level = (process.env.LOG_LEVEL ??
