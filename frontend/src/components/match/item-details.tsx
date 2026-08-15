@@ -1,5 +1,6 @@
-import classes from "./item-details.module.css";
 import parse from "html-react-parser";
+
+import classes from "./item-details.module.css";
 
 interface ItemDetailsProps {
 	description: string;

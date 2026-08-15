@@ -1,22 +1,7 @@
-import { useState, useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 
-import { Champion } from "./match/champion";
-import { Items } from "./match/items";
-import { Runes } from "./match/runes";
-import { SummonerSpells } from "./match/summoner-spells";
-import { Teams } from "./match/teams";
-import { Minions } from "./match/minions";
-import type {
-	MatchDto,
-	MatchNotes,
-	MatchParticipant,
-	MatchState,
-} from "../types/riot";
-
-// ui
 import { Button } from "@/ui/button";
 import { Label } from "@/ui/label";
-import { Textarea } from "@/ui/textarea";
 import {
 	Select,
 	SelectContent,
@@ -24,6 +9,20 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/ui/select";
+import { Textarea } from "@/ui/textarea";
+
+import type {
+	MatchDto,
+	MatchNotes,
+	MatchParticipant,
+	MatchState,
+} from "../types/riot";
+import { Champion } from "./match/champion";
+import { Items } from "./match/items";
+import { Minions } from "./match/minions";
+import { Runes } from "./match/runes";
+import { SummonerSpells } from "./match/summoner-spells";
+import { Teams } from "./match/teams";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
 
@@ -33,24 +32,29 @@ interface MatchAction {
 	notes: MatchNotes | null;
 }
 
+const POSITION_ORDER = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
+
+// Sorting rather than looking each position up keeps every participant, even in
+// modes like ARAM where `teamPosition` is empty for everyone.
+const byPosition = (team: MatchParticipant[]) =>
+	[...team].sort(
+		(a, b) =>
+			POSITION_ORDER.indexOf(a.teamPosition) -
+			POSITION_ORDER.indexOf(b.teamPosition),
+	);
+
 const matchReducer = (state: MatchState, action: MatchAction): MatchState => {
 	const player = action.val.info.participants.find(
 		(participant) => participant.puuid === action.puuid,
-	)!;
+	);
+	if (!player) return state;
+
 	const team1 = action.val.info.participants.filter(
 		(participant) => participant.teamId === 100,
 	);
 	const team2 = action.val.info.participants.filter(
 		(participant) => participant.teamId === 200,
 	);
-
-	const byPosition = (team: MatchParticipant[]) => [
-		team.find((player) => player.teamPosition === "TOP")!,
-		team.find((player) => player.teamPosition === "JUNGLE")!,
-		team.find((player) => player.teamPosition === "MIDDLE")!,
-		team.find((player) => player.teamPosition === "BOTTOM")!,
-		team.find((player) => player.teamPosition === "UTILITY")!,
-	];
 
 	return {
 		data: true,
@@ -196,6 +200,7 @@ export const Match = (props: MatchProps) => {
 						</div>
 						<Teams match={matchData} />
 						<button
+							type="button"
 							onClick={clickHandler}
 							className={`self-stretch px-px ${matchData.player.win ? "bg-indigo-700" : "bg-pink-700"}`}
 						>
@@ -215,7 +220,10 @@ export const Match = (props: MatchProps) => {
 									<ul>
 										{matchData.notes
 											? matchData.notes.champion_knowledge.map(
-													(note, index) => <li key={index}>{note}</li>,
+													(note, index) => (
+														// biome-ignore lint/suspicious/noArrayIndexKey: notes are read-only today; key on a note id once they come from the backend
+														<li key={index}>{note}</li>
+													),
 												)
 											: "..."}
 									</ul>

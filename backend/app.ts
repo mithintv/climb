@@ -19,7 +19,18 @@ app.use(
 	}),
 );
 
-app.use(pinoHttp({ logger }));
+// pino-http's default messages are the bare strings "request completed" and
+// "request errored"; these templates render the request details that otherwise
+// only appear in the hidden req/res objects.
+app.use(
+	pinoHttp({
+		logger,
+		customSuccessMessage: () =>
+			"{req.method} {req.url} -> {res.statusCode} ({responseTime}ms)",
+		customErrorMessage: () =>
+			"{req.method} {req.url} -> {res.statusCode} (errored)",
+	}),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

@@ -13,7 +13,9 @@ const errorStatus = (error: unknown) =>
 const router = express.Router();
 router
 	.get("/riot/puuid/:riotId", async (req, res) => {
-		const [gameName, tagLine] = req.params.riotId.split("#");
+		// Riot ids without a tag fall back to NA1 in fetchPUUID; resolve it here so
+		// the logs record the tag actually sent upstream.
+		const [gameName, tagLine = "NA1"] = req.params.riotId.split("#");
 		try {
 			const puuid = await fetchPUUID(gameName, tagLine);
 			req.log.debug(

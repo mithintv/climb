@@ -1,0 +1,9 @@
+# Check out LF on every platform so Biome's `lineEnding: "lf"` is not fighting
+# git's core.autocrlf on Windows.
+* text=auto eol=lf
+
+# Binary assets git should never touch.
+*.png binary
+*.jpg binary
+*.svg text eol=lf
+*.db binary

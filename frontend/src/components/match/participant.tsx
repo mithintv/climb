@@ -1,5 +1,5 @@
-import { Champion } from "./champion";
 import type { MatchParticipant } from "../../types/riot";
+import { Champion } from "./champion";
 
 interface ParticipantProps {
 	player: MatchParticipant;

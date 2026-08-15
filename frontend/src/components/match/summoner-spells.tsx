@@ -2,6 +2,7 @@ import summonerSpellLibrary from "@assets/summoner.json";
 
 interface SummonerSpell {
 	key: string;
+	name: string;
 	image: { full: string };
 }
 
@@ -18,7 +19,7 @@ export const SummonerSpells = (props: SummonerSpellsProps) => {
 	// returns summoner spell object given spell ID
 	const fetchSpell = (spellId: number) => {
 		return Object.values<SummonerSpell>(summonerSpellLibrary.data).find(
-			(spell) => parseInt(spell.key) === spellId,
+			(spell) => parseInt(spell.key, 10) === spellId,
 		);
 	};
 
@@ -29,8 +30,8 @@ export const SummonerSpells = (props: SummonerSpellsProps) => {
 
 	return (
 		<div className="my-px space-y-2">
-			<img className="w-5" src={summonerSpellImage(spell1)} />
-			<img className="w-5" src={summonerSpellImage(spell2)} />
+			<img className="w-5" src={summonerSpellImage(spell1)} alt={spell1.name} />
+			<img className="w-5" src={summonerSpellImage(spell2)} alt={spell2.name} />
 		</div>
 	);
 };
