@@ -3,20 +3,22 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"start": "pnpm --recursive --parallel start",
-		"start:backend": "pnpm --filter backend dev",
-		"start:frontend": "pnpm --filter frontend dev",
-		"format": "prettier --write .",
-		"format:check": "prettier --check .",
+		"dev": "pnpm --recursive --parallel dev",
+		"dev:backend": "pnpm --filter backend dev",
+		"dev:frontend": "pnpm --filter frontend dev",
+		"format": "biome format --write .",
+		"format:check": "biome format .",
+		"lint": "biome lint .",
+		"check": "biome check --write .",
+		"check:ci": "biome ci .",
 		"prepare": "husky"
 	},
 	"lint-staged": {
-		"*": "prettier --write --ignore-unknown"
+		"*": "biome check --write --files-ignore-unknown=true --no-errors-on-unmatched"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.5.8",
 		"husky": "^9.1.7",
-		"lint-staged": "^17.3.0",
-		"prettier": "^3.9.6",
-		"prettier-plugin-tailwindcss": "^0.8.1"
+		"lint-staged": "^17.3.0"
 	}
 }

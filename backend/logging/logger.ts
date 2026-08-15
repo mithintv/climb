@@ -9,17 +9,32 @@ const isProduction = process.env.NODE_ENV === "production";
 const level = (process.env.LOG_LEVEL ??
 	(isProduction ? "info" : "debug")) as Level;
 
+// Resolves "res.statusCode" against the log object. Returns undefined for a path
+// that does not exist, so the placeholder can be left intact as a typo signal.
+const resolvePath = (log: Record<string, unknown>, path: string) => {
+	let value: unknown = log;
+	for (const key of path.split(".")) {
+		if (typeof value !== "object" || value === null) return undefined;
+		if (!(key in value)) return undefined;
+		value = (value as Record<string, unknown>)[key];
+	}
+	return value;
+};
+
 // The terminal shows only the rendered message: `{prop}` placeholders are filled
 // in from the log object, which is then hidden. Seq still receives every property.
 const renderMessage = (log: Record<string, unknown>, messageKey: string) => {
 	const template = String(log[messageKey] ?? "");
-	const message = template.replace(/\{(\w+)\}/g, (placeholder, key: string) => {
-		if (!(key in log)) return placeholder;
-		const value = log[key];
-		return typeof value === "object" && value !== null
-			? JSON.stringify(value)
-			: String(value);
-	});
+	const message = template.replace(
+		/\{([\w.]+)\}/g,
+		(placeholder, path: string) => {
+			const value = resolvePath(log, path);
+			if (value === undefined) return placeholder;
+			return typeof value === "object" && value !== null
+				? JSON.stringify(value)
+				: String(value);
+		},
+	);
 	const err = log.err as { message?: string; stack?: string } | undefined;
 	return err ? `${message}\n${err.stack ?? err.message}` : message;
 };

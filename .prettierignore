@@ -1,5 +1,0 @@
-dist/
-pnpm-lock.yaml
-backend/assets/
-backend/*.db
-frontend/public/

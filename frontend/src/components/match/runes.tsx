@@ -1,9 +1,11 @@
 import runesLibrary from "@assets/runesReforged.json";
+
 import type { PerkStyle } from "../../types/riot";
 
 interface Rune {
 	id: number;
 	icon: string;
+	name: string;
 }
 
 const runeImage = (rune: Rune) => {
@@ -55,12 +57,26 @@ export const Runes = (props: RunesProps) => {
 		<>
 			<div className="flex flex-row">
 				{primaryRuneArray.map((rune) => {
-					return <img className="w-6" key={rune.id} src={runeImage(rune)} />;
+					return (
+						<img
+							className="w-6"
+							key={rune.id}
+							src={runeImage(rune)}
+							alt={rune.name}
+						/>
+					);
 				})}
 			</div>
 			<div className="flex flex-row">
 				{secondaryRuneArray.map((rune) => {
-					return <img className="w-6" key={rune.id} src={runeImage(rune)} />;
+					return (
+						<img
+							className="w-6"
+							key={rune.id}
+							src={runeImage(rune)}
+							alt={rune.name}
+						/>
+					);
 				})}
 			</div>
 		</>

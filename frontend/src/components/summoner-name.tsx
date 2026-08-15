@@ -1,9 +1,10 @@
-import { useState } from "react";
 import type { FormEvent } from "react";
+import { useState } from "react";
 
-import { MatchList } from "./match-list";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
+
+import { MatchList } from "./match-list";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
 
@@ -60,28 +61,28 @@ export const SummonerName = () => {
 			<div
 				className={`flex w-full flex-col items-center transition-all duration-300 ${hasMatches ? "mt-10" : "mt-36"}`}
 			>
-				<h1 className="bg-linear-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-6xl font-black tracking-tight text-transparent">
+				<h1 className="bg-linear-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text font-black text-6xl text-transparent tracking-tight">
 					Climb
 				</h1>
-				<p className="mt-3 text-sm text-slate-400">
+				<p className="mt-3 text-slate-400 text-sm">
 					Search a summoner. Review your games. Take notes. Climb.
 				</p>
 				<form
 					onSubmit={submitHandler}
-					className="mt-8 flex w-136 max-w-full items-center rounded-full bg-white shadow-lg shadow-cyan-500/10 focus-within:ring-2 focus-within:ring-cyan-400"
+					className="mt-8 flex w-136 max-w-full items-center rounded-full bg-white shadow-cyan-500/10 shadow-lg focus-within:ring-2 focus-within:ring-cyan-400"
 				>
-					<span className="ml-2 shrink-0 rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-600">
+					<span className="ml-2 shrink-0 rounded-full bg-indigo-100 px-3 py-1 font-bold text-indigo-600 text-xs">
 						NA
 					</span>
 					<Input
-						className="h-auto flex-1 border-0 bg-transparent px-3 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus-visible:ring-0 dark:bg-transparent"
+						className="h-auto flex-1 border-0 bg-transparent px-3 py-3 text-slate-800 text-sm placeholder:text-slate-400 focus-visible:ring-0 dark:bg-transparent"
 						placeholder="Game Name #Tag"
 						value={summonerName}
 						onChange={(e) => setSummonerName(e.target.value)}
 					/>
 					<Button
 						type="submit"
-						className="m-1 h-auto rounded-full px-6 py-2 text-sm font-semibold"
+						className="m-1 h-auto rounded-full px-6 py-2 font-semibold text-sm"
 					>
 						Search
 					</Button>

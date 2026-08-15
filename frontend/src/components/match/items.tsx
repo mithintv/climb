@@ -12,18 +12,20 @@ interface ItemsProps {
 
 export const Items = (props: ItemsProps) => {
 	return (
-		<div className="m-auto flex flex-row space-x-1 pt-2">
-			{props.items.map((item, index) => {
-				if (item === 0) {
-					return <img key={item + index} src={fillerImage()} width="30px" />;
-				} else {
-					return (
-						<div key={item + index} className="p-0">
-							<img key={item} src={itemImage(item)} width="30px" />
-						</div>
-					);
-				}
-			})}
-		</div>
+		// Item names live in backend/assets/item.json, which is too large to pull
+		// into the bundle for alt text alone, so the list is labelled as a whole and
+		// the icons are marked decorative until the assets move to the backend.
+		<ul className="m-auto flex flex-row space-x-1 pt-2" aria-label="Items">
+			{props.items.map((item, index) => (
+				// biome-ignore lint/suspicious/noArrayIndexKey: inventory slots are positional
+				<li key={index} className="p-0">
+					<img
+						src={item === 0 ? fillerImage() : itemImage(item)}
+						width="30px"
+						alt=""
+					/>
+				</li>
+			))}
+		</ul>
 	);
 };
