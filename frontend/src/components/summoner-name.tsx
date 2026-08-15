@@ -8,22 +8,33 @@ import { Input } from "@/ui/input";
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
 
 const fetchPUUID = async (summonerName: string): Promise<string> => {
-	console.log("request sent");
+	console.debug("Requesting PUUID", { summonerName });
 	const response = await fetch(
 		`${backendUrl}/riot/puuid/${encodeURIComponent(summonerName)}`,
 	);
 	const data = await response.json();
+	if (!response.ok) {
+		console.error("Failed to fetch PUUID", {
+			summonerName,
+			status: response.status,
+			body: data,
+		});
+	}
 	return data.puuid;
 };
 
 const fetchMatches = async (puuid: string): Promise<string[]> => {
-	console.log("request sent");
+	console.debug("Requesting matches", { puuid, start: 0, count: 5 });
 	const response = await fetch(
 		`${backendUrl}/riot/matches/${puuid}?start=0&count=5`,
 	);
 	const matchesArray = await response.json();
 	if (!Array.isArray(matchesArray)) {
-		console.error("Failed to fetch matches:", matchesArray);
+		console.error("Failed to fetch matches", {
+			puuid,
+			status: response.status,
+			body: matchesArray,
+		});
 		return [];
 	}
 	return matchesArray;
