@@ -1,3 +1,8 @@
 staged=$(git diff --cached --name-only --diff-filter=ACMR | wc -l | tr -d ' ')
+
+if [ "$staged" -eq 0 ]; then
+	exit 0
+fi
+
 pnpm exec lint-staged --quiet &&
-	printf '\033[32m✔\033[0m biome — %s staged files · formatted, linted, imports sorted\n' "$staged"
+	printf '\033[32m✔\033[0m biome — %s staged files · formatted & linted\n\n' "$staged"
