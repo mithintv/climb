@@ -1,8 +1,9 @@
+import { RouterProvider } from "@tanstack/react-router";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { App } from "./app";
 import { reportWebVitals } from "./report-web-vitals";
+import { router } from "./router";
 
 const container = document.getElementById("root");
 if (!container) throw new Error("Root element #root not found in index.html");
@@ -10,7 +11,7 @@ if (!container) throw new Error("Root element #root not found in index.html");
 const root = ReactDOM.createRoot(container);
 root.render(
 	<React.StrictMode>
-		<App />
+		<RouterProvider router={router} />
 	</React.StrictMode>,
 );
 
