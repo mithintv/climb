@@ -24,6 +24,7 @@ dist/
 # configuration
 /backend/src/config
 /frontend/src/config
+**/.mailmap
 
 # misc
 .DS_Store

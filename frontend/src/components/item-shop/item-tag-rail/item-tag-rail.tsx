@@ -1,49 +1,17 @@
 import { FilterXIcon } from "lucide-react";
 
-import { STAT_FILTER_GROUPS } from "@/lib/items";
 import { cn } from "@/lib/utils";
 
-// The client's own rail icons, sliced out of its texture atlas
-// (`game/assets/ux/itemshop/itemshop_texture_atlas4.png` on CommunityDragon).
-// Data Dragon serves no stat art at all — every `/img/ui/*` path 403s — and the
-// atlas is packed without a manifest, so the glyphs are committed as files
-// rather than hotlinked and re-sliced on every patch.
-//
-// The atlas carries five colour variants per stat. Two are used: the neutral
-// grey the rail sits in, and the coloured one that marks a filter as on. Both
-// sets share a filename per stat, so they are read off disk by name instead of
-// through 28 hand-written imports.
-const byStat = (modules: Record<string, unknown>): Record<string, string> =>
-	Object.fromEntries(
-		Object.entries(modules).map(([path, url]) => [
-			path.slice(path.lastIndexOf("/") + 1, -".png".length),
-			url as string,
-		]),
-	);
+import { STAT_FILTER_GROUPS } from "../constants/stat-filter.constant";
+import { COLOR_ICONS, MONO_ICONS } from "./stat-icon.constant";
 
-const COLOR_ICONS = byStat(
-	import.meta.glob("../../assets/item-tags/color/*.png", {
-		eager: true,
-		import: "default",
-		query: "?url",
-	}),
-);
-
-const MONO_ICONS = byStat(
-	import.meta.glob("../../assets/item-tags/mono/*.png", {
-		eager: true,
-		import: "default",
-		query: "?url",
-	}),
-);
-
-interface ItemTagRailProps {
+interface IItemTagRailProps {
 	selected: string[];
 	onToggle: (key: string) => void;
 	onClear: () => void;
 }
 
-export const ItemTagRail = (props: ItemTagRailProps) => (
+export const ItemTagRail = (props: IItemTagRailProps) => (
 	<nav
 		aria-label="Filter by stat"
 		className="flex w-12 shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-white/10 border-r py-3"
@@ -76,11 +44,14 @@ export const ItemTagRail = (props: ItemTagRailProps) => (
 							aria-label={stat.label}
 							title={stat.label}
 							onClick={() => props.onToggle(stat.key)}
+							// Selection reads off the icon itself — coloured when on, grey
+							// when off — so the button carries no box of its own. The
+							// atlas has no accent colour for Ability Haste or Movement,
+							// only a cream glyph against the grey one, so the off state
+							// is dimmed hard enough that those two still read as a change.
 							className={cn(
-								"flex size-9 items-center justify-center rounded-md border transition-all",
-								isSelected
-									? "border-primary/60 bg-primary/15"
-									: "border-transparent opacity-80 hover:border-white/10 hover:opacity-100",
+								"flex size-9 items-center justify-center rounded-md transition-opacity",
+								isSelected ? "opacity-100" : "opacity-45 hover:opacity-75",
 							)}
 						>
 							<img

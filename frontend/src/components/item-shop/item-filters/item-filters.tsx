@@ -1,12 +1,5 @@
 import { ArrowUpDownIcon, SearchIcon } from "lucide-react";
 
-import {
-	ITEM_VERSIONS,
-	type ItemSearch,
-	type ItemSort,
-	SUMMONERS_RIFT_LABEL,
-	TIER_TABS,
-} from "@/lib/items";
 import { cn } from "@/lib/utils";
 import { Input } from "@/ui/input";
 import {
@@ -17,15 +10,21 @@ import {
 	SelectValue,
 } from "@/ui/select";
 
-interface ItemFiltersProps {
-	search: ItemSearch;
+import { ITEM_VERSIONS } from "../constants/item-version.constant";
+import { SUMMONERS_RIFT_LABEL } from "../constants/shop-visibility.constant";
+import type { IItemSearch } from "../types/i-item-search.type";
+import type { ItemSort } from "../types/item-sort.type";
+import { TIER_TABS } from "./tier-tab.constant";
+
+interface IItemFiltersProps {
+	search: IItemSearch;
 	version: string;
 	resultCount: number;
-	onChange: (patch: Partial<ItemSearch>) => void;
+	onChange: (patch: Partial<IItemSearch>) => void;
 	onVersionChange: (version: string) => void;
 }
 
-export const ItemFilters = (props: ItemFiltersProps) => {
+export const ItemFilters = (props: IItemFiltersProps) => {
 	const { search, onChange } = props;
 	const sort: ItemSort = search.sort ?? "gold-asc";
 

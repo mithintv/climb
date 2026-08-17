@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { ITEM_VERSION } from "./constants/item-version.constant";
 import {
-	filterItems,
-	getItem,
-	getShopItems,
-	ITEM_VERSION,
-	type ItemTier,
 	STAT_FILTER_GROUPS,
 	STAT_FILTERS,
-	TIER_TABS,
-} from "./items";
+} from "./constants/stat-filter.constant";
+import { TIER_TABS } from "./item-filters/tier-tab.constant";
+import { filterItems, getItem, getShopItems } from "./item-shop.utils";
+import type { ItemTier } from "./types/item-tier.type";
 
 // Pinned to the bundled patch. A patch bump that reshuffles the build tree is
 // expected to move these numbers — the point is that it does so visibly.

@@ -1,18 +1,17 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { ItemFilters } from "./item-filters/item-filters";
+import { ItemGrid } from "./item-grid/item-grid";
+import { ItemPanel } from "./item-panel/item-panel";
 import {
 	filterItems,
 	getItem,
 	getShopItems,
 	groupByTier,
-	type ItemSearch,
-} from "@/lib/items";
-
-import { ItemFilters } from "./item-filters";
-import { ItemGrid } from "./item-grid";
-import { ItemPanel } from "./item-panel";
-import { ItemTagRail } from "./item-tag-rail";
+} from "./item-shop.utils";
+import { ItemTagRail } from "./item-tag-rail/item-tag-rail";
+import type { IItemSearch } from "./types/i-item-search.type";
 
 const route = getRouteApi("/items/$version");
 
@@ -33,7 +32,7 @@ export const ItemShop = () => {
 
 	// replace: true keeps filter tweaks out of the back stack, so Back leaves
 	// the shop rather than stepping through every tag that was tried.
-	const setSearch = (patch: Partial<ItemSearch>) =>
+	const setSearch = (patch: Partial<IItemSearch>) =>
 		navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
 
 	const toggleStat = (key: string) => {
