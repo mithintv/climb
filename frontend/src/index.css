@@ -134,4 +134,43 @@
 	html {
 		@apply font-sans;
 	}
+
+	/* Tailwind v4's preflight drops the pointer cursor on buttons. Put it back
+	   here rather than on each element, so anything clickable gets it — and
+	   nothing disabled does. */
+	button:not(:disabled),
+	summary,
+	[role="button"]:not([aria-disabled="true"]),
+	label[for] {
+		cursor: pointer;
+	}
+
+	/* Firefox and anything else honouring the standard properties. */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: var(--muted) transparent;
+	}
+
+	/* WebKit ignores scrollbar-color, so the thumb is drawn again here. Inset
+	   via a transparent border so it reads as a slim pill rather than a bar
+	   welded to the edge. */
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background-color: var(--muted);
+		background-clip: padding-box;
+		border: 2px solid transparent;
+		border-radius: 9999px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background-color: var(--muted-foreground);
+	}
+	::-webkit-scrollbar-corner {
+		background: transparent;
+	}
 }

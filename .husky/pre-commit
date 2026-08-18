@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 staged=$(git diff --cached --name-only --diff-filter=ACMR | wc -l | tr -d ' ')
 
 if [ "$staged" -eq 0 ]; then

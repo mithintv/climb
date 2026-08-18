@@ -3,6 +3,7 @@
 # agents
 **/AGENTS.md
 **/CLAUDE.md
+**/.claude/
 **/tickets
 
 # dependencies
@@ -23,6 +24,7 @@ dist/
 # configuration
 /backend/src/config
 /frontend/src/config
+**/.mailmap
 
 # misc
 .DS_Store
