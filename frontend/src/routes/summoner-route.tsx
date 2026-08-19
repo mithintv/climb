@@ -1,9 +1,17 @@
 import { createRoute } from "@tanstack/react-router";
+import { HistoryIcon } from "lucide-react";
 
 import { MatchList } from "@/components/matches/match-list";
-import { parseRiotIdParam } from "@/components/summoner/summoner.utils";
+import {
+	entryForQueue,
+	FLEX_QUEUE,
+	parseRiotIdParam,
+	SOLO_QUEUE,
+} from "@/components/summoner/summoner.utils";
 import { SummonerChampionStats } from "@/components/summoner/summoner-champion-stats";
 import { SummonerHeader } from "@/components/summoner/summoner-header";
+import { SummonerRankCard } from "@/components/summoner/summoner-rank-card";
+import { SummonerRecentSummary } from "@/components/summoner/summoner-recent-summary";
 import { useSummoner } from "@/components/summoner/use-summoner";
 
 import { rootRoute } from "./root-route";
@@ -29,28 +37,52 @@ const SummonerPage = () => {
 	}
 
 	return (
-		<div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8">
-			<SummonerHeader
-				// Riot's casing once the account resolves; until then, what was typed.
-				gameName={account?.gameName ?? gameName}
-				tagLine={account?.tagLine ?? tagLine}
-				ranks={ranks}
-			/>
+		<div className="mx-auto max-w-6xl px-4 py-6">
+			{/* Identity and rank share the rail, so nothing spans the top and the
+			    match list starts at the page's first line — the games are what the
+			    page is for, and they get its full height. One column below lg,
+			    where a 300px rail would leave the rows too narrow to read. */}
+			<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+				<aside className="flex flex-col gap-4">
+					<SummonerHeader
+						// Riot's casing once the account resolves; until then, what was typed.
+						gameName={account?.gameName ?? gameName}
+						tagLine={account?.tagLine ?? tagLine}
+					/>
 
-			{account && matches.length > 0 && (
-				<SummonerChampionStats matches={matches} puuid={account.puuid} />
-			)}
+					<SummonerRankCard
+						queueLabel="Ranked Solo"
+						entry={entryForQueue(ranks, SOLO_QUEUE)}
+					/>
+					<SummonerRankCard
+						queueLabel="Ranked Flex"
+						entry={entryForQueue(ranks, FLEX_QUEUE)}
+					/>
+					{account && matches.length > 0 && (
+						<SummonerChampionStats matches={matches} puuid={account.puuid} />
+					)}
+				</aside>
 
-			<section>
-				<h2 className="mb-3 px-1 font-medium text-muted-foreground text-xs uppercase tracking-widest">
-					Recent matches
-				</h2>
-				<MatchList
-					puuid={account?.puuid ?? ""}
-					matches={matches}
-					loading={loading}
-				/>
-			</section>
+				<main className="flex flex-col gap-2">
+					<h2 className="flex items-center gap-2 px-1 font-semibold text-foreground text-sm">
+						<HistoryIcon
+							className="size-3.5 text-cyan-400"
+							aria-hidden="true"
+						/>
+						Match History
+					</h2>
+
+					{account && (
+						<SummonerRecentSummary matches={matches} puuid={account.puuid} />
+					)}
+
+					<MatchList
+						puuid={account?.puuid ?? ""}
+						matches={matches}
+						loading={loading}
+					/>
+				</main>
+			</div>
 		</div>
 	);
 };

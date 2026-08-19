@@ -25,9 +25,20 @@ export const parseRiotIdParam = (param: string) => {
 /** The queue whose rank a profile leads with. */
 export const SOLO_QUEUE = "RANKED_SOLO_5x5";
 
+/** The second ranked queue, shown under solo whether or not it is played. */
+export const FLEX_QUEUE = "RANKED_FLEX_SR";
+
 /** Picks solo queue if it is there, else the first queue with any games. */
 export const primaryEntry = (entries: ILeagueEntry[]) =>
 	entries.find((entry) => entry.queueType === SOLO_QUEUE) ?? entries[0];
+
+/**
+ * The entry for one queue, or undefined when the player has not been placed in
+ * it. Riot omits unplayed queues entirely rather than returning an empty entry,
+ * so the caller renders "Unranked" from the absence.
+ */
+export const entryForQueue = (entries: ILeagueEntry[], queueType: string) =>
+	entries.find((entry) => entry.queueType === queueType);
 
 /** "DIAMOND" + "I" → "Diamond I". Master and above have no meaningful division. */
 export const formatRank = (entry: ILeagueEntry) => {
@@ -42,6 +53,58 @@ export const formatRank = (entry: ILeagueEntry) => {
 export const winRate = (wins: number, losses: number) => {
 	const games = wins + losses;
 	return games === 0 ? null : Math.round((wins / games) * 100);
+};
+
+/** The searched player's totals across the matches on screen. */
+export interface IRecentRecord {
+	games: number;
+	wins: number;
+	losses: number;
+	/** Per-game averages, which is how a scoreboard states a KDA line. */
+	kills: number;
+	deaths: number;
+	assists: number;
+}
+
+/**
+ * Totals the player's own line across the loaded matches. Averages are per
+ * game, not per death — the KDA ratio is derived separately so a deathless
+ * sample can say so instead of dividing by zero.
+ */
+export const recentRecord = (
+	matches: IMatch[],
+	puuid: string,
+): IRecentRecord => {
+	const record: IRecentRecord = {
+		games: 0,
+		wins: 0,
+		losses: 0,
+		kills: 0,
+		deaths: 0,
+		assists: 0,
+	};
+
+	for (const match of matches) {
+		const player = match.info.participants.find(
+			(participant) => participant.puuid === puuid,
+		);
+		if (!player) continue;
+
+		record.games += 1;
+		record.wins += player.win ? 1 : 0;
+		record.losses += player.win ? 0 : 1;
+		record.kills += player.kills;
+		record.deaths += player.deaths;
+		record.assists += player.assists;
+	}
+
+	if (record.games > 0) {
+		record.kills /= record.games;
+		record.deaths /= record.games;
+		record.assists /= record.games;
+	}
+
+	return record;
 };
 
 /** One champion's record across the matches on screen. */

@@ -1,3 +1,5 @@
+import { SwordsIcon } from "lucide-react";
+
 import { MatchChampion } from "@/components/matches/match-champion";
 import { cn } from "@/lib/utils";
 import type { IMatch } from "@/types/riot/i-match.type";
@@ -18,14 +20,20 @@ export const SummonerChampionStats = (props: ISummonerChampionStatsProps) => {
 	const shown = stats.slice(0, props.limit ?? 5);
 
 	return (
-		<section>
-			<h2 className="mb-3 px-1 font-medium text-muted-foreground text-xs uppercase tracking-widest">
+		<section className="rounded-xl border border-white/5 bg-card/40">
+			<h2 className="flex items-center justify-between gap-2 border-white/5 border-b px-3 py-2.5">
+				<span className="flex items-center gap-2 font-semibold text-foreground text-sm">
+					<SwordsIcon className="size-3.5 text-cyan-400" aria-hidden="true" />
+					Champion Stats
+				</span>
 				{/* Named for the sample it covers: these are the loaded matches, not a
 				    season record, and saying so avoids implying otherwise. */}
-				Champions · last {props.matches.length} games
+				<span className="text-[11px] text-muted-foreground">
+					Last {props.matches.length} games
+				</span>
 			</h2>
 
-			<ul className="flex flex-col gap-1">
+			<ul className="flex flex-col">
 				{shown.map((stat) => {
 					const rate = winRate(stat.wins, stat.games - stat.wins);
 					// Deaths can legitimately be zero across the sample.
@@ -37,7 +45,7 @@ export const SummonerChampionStats = (props: ISummonerChampionStatsProps) => {
 					return (
 						<li
 							key={stat.championName}
-							className="flex items-center gap-3 rounded-lg border border-white/5 bg-card/40 px-3 py-2"
+							className="flex items-center gap-3 border-white/5 border-b px-3 py-2 last:border-b-0"
 						>
 							<MatchChampion
 								name={stat.championName}

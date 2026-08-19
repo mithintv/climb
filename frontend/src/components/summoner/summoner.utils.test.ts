@@ -6,9 +6,11 @@ import type { IMatchParticipant } from "@/types/riot/i-match-participant.type";
 
 import {
 	championStats,
+	entryForQueue,
 	formatRank,
 	parseRiotIdParam,
 	primaryEntry,
+	recentRecord,
 	toRiotIdParam,
 	winRate,
 } from "./summoner.utils";
@@ -138,5 +140,41 @@ describe("championStats", () => {
 
 	it("returns nothing when the player is in none of the matches", () => {
 		expect(championStats([match("other", "Ashe")], "me")).toEqual([]);
+	});
+});
+
+describe("entryForQueue", () => {
+	it("finds the entry for a queue the player is placed in", () => {
+		const entries = [entry({ queueType: "RANKED_FLEX_SR", tier: "GOLD" })];
+		expect(entryForQueue(entries, "RANKED_FLEX_SR")?.tier).toBe("GOLD");
+	});
+
+	it("returns undefined for a queue Riot omitted, which reads as unranked", () => {
+		expect(entryForQueue([entry({})], "RANKED_FLEX_SR")).toBeUndefined();
+	});
+});
+
+describe("recentRecord", () => {
+	it("totals wins and losses and averages the kda line per game", () => {
+		const record = recentRecord(
+			[
+				match("me", "Ashe", { win: true, kills: 10, deaths: 2, assists: 4 }),
+				match("me", "Jinx", { win: false, kills: 4, deaths: 8, assists: 2 }),
+			],
+			"me",
+		);
+
+		expect(record.games).toBe(2);
+		expect(record.wins).toBe(1);
+		expect(record.losses).toBe(1);
+		expect(record.kills).toBe(7);
+		expect(record.deaths).toBe(5);
+		expect(record.assists).toBe(3);
+	});
+
+	it("leaves the averages at zero rather than dividing by no games", () => {
+		const record = recentRecord([match("other", "Ashe")], "me");
+		expect(record.games).toBe(0);
+		expect(record.deaths).toBe(0);
 	});
 });
