@@ -157,7 +157,7 @@ Paths worth knowing:
 | --- | --- |
 | `plugins/rcp-be-lol-game-data/global/default/v1/items.json` | Item data. No `maps` field, so it cannot answer "which shop" — and it ships the same stripped description as Data Dragon. |
 | `plugins/rcp-be-lol-game-data/global/default/v1/maps.json` | Authoritative map names: 11 Summoner's Rift, 12 Random Map (ARAM), 21 Nexus Blitz, 22 TFT, 30 Arena, 33 Swarm, 35 The Bandlewood, 453 Classic Rift. |
-| `game/assets/ux/itemshop/itemshop_texture_atlas4.png` | The shop's stat-rail icons — a 14×5 sprite grid (14 stats, 5 colour variants) packed **without a manifest**. Sliced into `frontend/src/assets/item-tags/` by measuring opaque bands off the alpha channel; the grid pitch is irregular (25–30px), so it is not derivable from a cell size. |
+| `game/assets/ux/itemshop/itemshop_texture_atlas4.png` | The shop's stat-rail icons — a 14×5 sprite grid (14 stats, 5 colour variants) packed **without a manifest**. Sliced into `frontend/src/assets/icons/item-tags/` by measuring opaque bands off the alpha channel; the grid pitch is irregular (25–30px), so it is not derivable from a cell size. |
 | `game/en_us/data/menu/en_us/lol.stringtable.json` | 33MB, ~139k localized strings. `generatedtip_item_<id>_description` is the **unstripped** tooltip, with `@Placeholder@` tokens and `{{ Sub_Template }}` references (`item_cooldown` = `%i:cooldown% (@Cooldown@s)`). |
 | `game/items.cdtb.bin.json` | 16MB item bin: per-item `mDataValues`, `mItemCalculations` (typed formula trees), stat mods, and `Items/<id>/Spells/<id>Active.mSpell.cooldownTime`. |
 

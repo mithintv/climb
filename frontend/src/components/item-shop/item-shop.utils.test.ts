@@ -5,7 +5,7 @@ import {
 	STAT_FILTER_GROUPS,
 	STAT_FILTERS,
 } from "./constants/stat-filter.constant";
-import { TIER_TABS } from "./item-filters/tier-tab.constant";
+import { ITEM_TIER_TABS } from "./item-filters/item-tier-tab.constant";
 import { filterItems, getItem, getShopItems } from "./item-shop.utils";
 import type { ItemTier } from "./types/item-tier.type";
 
@@ -162,7 +162,7 @@ describe("filters", () => {
 	});
 
 	it("scopes to one tier per tab", () => {
-		for (const tab of TIER_TABS) {
+		for (const tab of ITEM_TIER_TABS) {
 			const shown = filterItems(shop, { tier: tab.tier });
 			if (!tab.tier) {
 				expect(shown).toHaveLength(shop.length);

@@ -14,7 +14,7 @@ import { ITEM_VERSIONS } from "../constants/item-version.constant";
 import { SUMMONERS_RIFT_LABEL } from "../constants/shop-visibility.constant";
 import type { IItemSearch } from "../types/i-item-search.type";
 import type { ItemSort } from "../types/item-sort.type";
-import { TIER_TABS } from "./tier-tab.constant";
+import { ITEM_TIER_TABS } from "./item-tier-tab.constant";
 
 interface IItemFiltersProps {
 	search: IItemSearch;
@@ -32,7 +32,7 @@ export const ItemFilters = (props: IItemFiltersProps) => {
 		<div className="border-white/10 border-b">
 			<div className="flex items-center gap-1 px-4 pt-2">
 				<div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-					{TIER_TABS.map((tab) => {
+					{ITEM_TIER_TABS.map((tab) => {
 						const active = search.tier === tab.tier;
 						return (
 							<button

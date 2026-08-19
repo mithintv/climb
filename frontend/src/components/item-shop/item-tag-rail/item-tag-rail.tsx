@@ -3,7 +3,48 @@ import { FilterXIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { STAT_FILTER_GROUPS } from "../constants/stat-filter.constant";
-import { COLOR_ICONS, MONO_ICONS } from "./stat-icon.constant";
+
+// The client's own rail icons, sliced out of its texture atlas
+// (`game/assets/ux/itemshop/itemshop_texture_atlas4.png` on CommunityDragon).
+// Data Dragon serves no stat art at all — every `/img/ui/*` path 403s — and the
+// atlas is packed without a manifest, so the glyphs are committed as files
+// rather than hotlinked and re-sliced on every patch.
+//
+// The atlas carries five colour variants per stat. Two are used: the neutral
+// grey the rail sits in, and the coloured one that marks a filter as on. Both
+// sets share a filename per stat, so they are read off disk by name instead of
+// through 28 hand-written imports.
+
+/**
+ * Key one variant directory's glob result by item type, reducing each module
+ * path to the bare filename the colour and grey sets share
+ * (`.../mono/on-hit.png` → `on-hit`), which is also the key the rail filters on.
+ */
+const byItemType = (modules: Record<string, unknown>): Record<string, string> =>
+	Object.fromEntries(
+		Object.entries(modules).map(([path, url]) => [
+			path.slice(path.lastIndexOf("/") + 1, -".png".length),
+			url as string,
+		]),
+	);
+
+/** Icon per item type, coloured — the state a selected filter is drawn in. */
+const ITEM_TYPE_ICONS_COLOR = byItemType(
+	import.meta.glob("../../../assets/icons/item-tags/color/*.png", {
+		eager: true,
+		import: "default",
+		query: "?url",
+	}),
+);
+
+/** Icon per item type, grey — the rail's resting state. */
+const ITEM_TYPE_ICONS_MONO = byItemType(
+	import.meta.glob("../../../assets/icons/item-tags/mono/*.png", {
+		eager: true,
+		import: "default",
+		query: "?url",
+	}),
+);
 
 interface IItemTagRailProps {
 	selected: string[];
@@ -55,7 +96,11 @@ export const ItemTagRail = (props: IItemTagRailProps) => (
 							)}
 						>
 							<img
-								src={isSelected ? COLOR_ICONS[stat.key] : MONO_ICONS[stat.key]}
+								src={
+									isSelected
+										? ITEM_TYPE_ICONS_COLOR[stat.key]
+										: ITEM_TYPE_ICONS_MONO[stat.key]
+								}
 								alt=""
 								className="size-5 object-contain"
 							/>

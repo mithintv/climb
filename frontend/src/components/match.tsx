@@ -1,6 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+import { GoldIcon } from "@/assets/icons/gold-icon";
+import { MinionsIcon } from "@/assets/icons/minions-icon";
+import { VisionIcon } from "@/assets/icons/vision-icon";
 import { cn } from "@/lib/utils";
 import { Button } from "@/ui/button";
 import { Label } from "@/ui/label";
@@ -29,7 +32,6 @@ import {
 } from "./match/match.utils";
 import { formatGameMode, QUEUE_NAMES } from "./match/queue.constant";
 import { Runes } from "./match/runes";
-import { GoldIcon, MinionsIcon, VisionIcon } from "./match/stat-icon";
 import { SummonerSpells } from "./match/summoner-spells";
 import { Teams } from "./match/teams";
 
