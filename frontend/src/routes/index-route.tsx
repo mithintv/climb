@@ -1,11 +1,11 @@
 import { createRoute } from "@tanstack/react-router";
 
-import { SummonerName } from "@/components/summoner-name";
+import { SummonerSearch } from "@/components/summoner/summoner-search";
 
 import { rootRoute } from "./root-route";
 
 /** The summoner lookup the site opens on. */
-const HomePage = () => <SummonerName />;
+const HomePage = () => <SummonerSearch />;
 
 /** `/` */
 export const indexRoute = createRoute({

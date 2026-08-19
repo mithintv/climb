@@ -1,10 +1,10 @@
 import { createRoute, notFound, redirect } from "@tanstack/react-router";
 
-import { ITEM_VERSION } from "@/components/item-shop/constants/item-version.constant";
-import { ItemShop } from "@/components/item-shop/item-shop";
-import { isKnownVersion } from "@/components/item-shop/item-shop.utils";
-import type { IItemSearch } from "@/components/item-shop/types/i-item-search.type";
-import { ITEM_TIERS } from "@/components/item-shop/types/item-tier.type";
+import { ITEM_VERSION } from "@/components/items/constants/item-version.constant";
+import { ItemShop } from "@/components/items/item-shop";
+import { isKnownVersion } from "@/components/items/item-shop.utils";
+import type { IItemSearch } from "@/components/items/types/i-item-search.type";
+import { ITEM_TIERS } from "@/components/items/types/item-tier.type";
 
 import { rootRoute } from "./root-route";
 

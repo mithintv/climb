@@ -13,7 +13,8 @@
 			"!**/pnpm-lock.yaml",
 			"!backend/assets",
 			"!backend/*.db",
-			"!frontend/public"
+			"!frontend/public",
+			"!**/*.svg"
 		]
 	},
 	"formatter": {
