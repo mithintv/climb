@@ -1,6 +1,6 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 
-import { ITEM_VERSION } from "@/components/item-shop/constants/item-version.constant";
+import { ITEM_VERSION } from "@/components/items/constants/item-version.constant";
 
 /** The frame every page renders inside: the top nav and the route outlet. */
 const RootLayout = () => (

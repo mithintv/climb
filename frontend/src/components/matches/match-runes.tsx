@@ -2,8 +2,8 @@ import runesLibrary from "@assets/runesReforged.json";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/ui/hover-card";
 
-import type { PerkStyle } from "../../types/riot";
-import { STAT_SHARDS, statShardImage } from "./stat-shard.constant";
+import type { IPerkStyle } from "../../types/riot/i-perk-style.type";
+import { MATCH_RUNE_STAT_SHARDS } from "./constants/match-rune-stat-shard.constant";
 
 interface Rune {
 	id: number;
@@ -21,15 +21,15 @@ interface RuneTree {
 const runeImage = (rune: { icon: string }) =>
 	`https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}`;
 
-interface RunesProps {
-	runes: PerkStyle[];
+interface MatchRunesProps {
+	runes: IPerkStyle[];
 	primaryId: number;
 	secondaryId: number;
 	/** The three stat shard ids, in offense/flex/defense order. */
 	statPerks: { offense: number; flex: number; defense: number };
 }
 
-export const Runes = (props: RunesProps) => {
+export const MatchRunes = (props: MatchRunesProps) => {
 	// return rune object from static assets given the ID of a given rune tree
 	const fetchRuneObject = (runeTreeId: number) => {
 		return runesLibrary.find((runeTree) => runeTree.id === runeTreeId);
@@ -81,7 +81,7 @@ export const Runes = (props: RunesProps) => {
 				// Stacked, not side by side: one icon of width instead of two, and
 				// the keystone over its secondary tree reads as one build.
 				className="flex cursor-default flex-col items-center gap-0.5 rounded outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-				aria-label={`Runes: ${keystone.name}, ${secondaryTree.name} secondary`}
+				aria-label={`MatchRunes: ${keystone.name}, ${secondaryTree.name} secondary`}
 			>
 				<img
 					className="size-6 rounded-full bg-black/40"
@@ -162,7 +162,7 @@ const StatShardDetail = (props: StatShardDetailProps) => {
 		props.statPerks.flex,
 		props.statPerks.defense,
 	]
-		.map((id) => STAT_SHARDS[id])
+		.map((id) => MATCH_RUNE_STAT_SHARDS[id])
 		.filter((shard) => shard !== undefined);
 
 	if (chosen.length === 0) return null;
@@ -177,7 +177,7 @@ const StatShardDetail = (props: StatShardDetailProps) => {
 					<li key={shard.icon} className="flex items-center gap-2">
 						<img
 							className="size-5 shrink-0 rounded-full bg-black/40"
-							src={statShardImage(shard)}
+							src={shard.icon}
 							alt=""
 							loading="lazy"
 						/>

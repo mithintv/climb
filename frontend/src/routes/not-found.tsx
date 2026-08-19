@@ -1,4 +1,4 @@
-import { ITEM_VERSION } from "@/components/item-shop/constants/item-version.constant";
+import { ITEM_VERSION } from "@/components/items/constants/item-version.constant";
 
 /**
  * Shown for an unknown route, and for a patch the page cannot serve. Not a

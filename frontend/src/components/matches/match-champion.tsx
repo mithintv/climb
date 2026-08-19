@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils";
 
-interface ChampionProps {
+interface MatchChampionProps {
 	name: string;
 	id?: number;
 	className?: string;
 }
 
-export const Champion = (props: ChampionProps) => {
+export const MatchChampion = (props: MatchChampionProps) => {
 	const championImage = (championName: string) => {
 		return `https://ddragon.leagueoflegends.com/cdn/16.15.1/img/champion/${championName}.png`;
 	};

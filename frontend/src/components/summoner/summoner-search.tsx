@@ -2,21 +2,22 @@ import { useNavigate } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
-import { toRiotIdParam } from "@/components/summoner/summoner.utils";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
+
+import { toRiotIdParam } from "./summoner.utils";
 
 /**
  * The search box. It resolves nothing itself — it routes to the profile, so a
  * looked-up player has a URL that can be shared, refreshed and gone back to.
  */
-export const SummonerName = () => {
+export const SummonerSearch = () => {
 	const navigate = useNavigate();
-	const [summonerName, setSummonerName] = useState("");
+	const [typedRiotId, setTypedRiotId] = useState("");
 
 	const submitHandler = (event: FormEvent) => {
 		event.preventDefault();
-		const typed = summonerName.trim();
+		const typed = typedRiotId.trim();
 		if (!typed) return;
 
 		// A tag is optional in the box; NA1 is the default the backend uses too.
@@ -48,8 +49,8 @@ export const SummonerName = () => {
 					<Input
 						className="h-auto flex-1 border-0 bg-transparent px-3 py-3 text-slate-800 text-sm placeholder:text-slate-400 focus-visible:ring-0 dark:bg-transparent"
 						placeholder="Game Name #Tag"
-						value={summonerName}
-						onChange={(e) => setSummonerName(e.target.value)}
+						value={typedRiotId}
+						onChange={(e) => setTypedRiotId(e.target.value)}
 					/>
 					<Button
 						type="submit"

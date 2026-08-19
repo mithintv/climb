@@ -1,10 +1,10 @@
-import type { MatchDto } from "@/types/riot";
+import type { IMatch } from "@/types/riot/i-match.type";
 
 import { Match, MatchSkeleton } from "./match";
 
 interface MatchListProps {
 	puuid: string;
-	matches: MatchDto[];
+	matches: IMatch[];
 	loading: boolean;
 }
 

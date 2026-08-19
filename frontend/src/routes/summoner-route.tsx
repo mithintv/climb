@@ -1,8 +1,8 @@
 import { createRoute } from "@tanstack/react-router";
 
-import { MatchList } from "@/components/match-list";
-import { ChampionStats } from "@/components/summoner/champion-stats";
+import { MatchList } from "@/components/matches/match-list";
 import { parseRiotIdParam } from "@/components/summoner/summoner.utils";
+import { SummonerChampionStats } from "@/components/summoner/summoner-champion-stats";
 import { SummonerHeader } from "@/components/summoner/summoner-header";
 import { useSummoner } from "@/components/summoner/use-summoner";
 
@@ -38,7 +38,7 @@ const SummonerPage = () => {
 			/>
 
 			{account && matches.length > 0 && (
-				<ChampionStats matches={matches} puuid={account.puuid} />
+				<SummonerChampionStats matches={matches} puuid={account.puuid} />
 			)}
 
 			<section>

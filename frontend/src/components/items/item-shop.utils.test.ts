@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { ITEM_VERSION } from "./constants/item-version.constant";
 import {
-	STAT_FILTER_GROUPS,
-	STAT_FILTERS,
-} from "./constants/stat-filter.constant";
+	ITEM_TAG_FILTER_GROUPS,
+	ITEM_TAG_FILTERS,
+} from "./constants/item-tag-filter.constant";
+import { ITEM_VERSION } from "./constants/item-version.constant";
 import { ITEM_TIER_TABS } from "./item-filters/item-tier-tab.constant";
 import { filterItems, getItem, getShopItems } from "./item-shop.utils";
 import type { ItemTier } from "./types/item-tier.type";
@@ -111,8 +111,10 @@ describe("filters", () => {
 	const shop = getShopItems(ITEM_VERSION);
 
 	it("keeps the rail in the client's order and grouping", () => {
-		expect(STAT_FILTER_GROUPS.map((group) => group.length)).toEqual([5, 3, 6]);
-		expect(STAT_FILTERS.map((stat) => stat.key)).toEqual([
+		expect(ITEM_TAG_FILTER_GROUPS.map((group) => group.length)).toEqual([
+			5, 3, 6,
+		]);
+		expect(ITEM_TAG_FILTERS.map((stat) => stat.key)).toEqual([
 			"attack-damage",
 			"critical-strike",
 			"attack-speed",
@@ -133,7 +135,7 @@ describe("filters", () => {
 	it("gives every stat a tag that exists and matches items", () => {
 		// A typo in a stat's tag list would silently filter to nothing.
 		const inData = new Set(shop.flatMap((item) => item.tags));
-		for (const stat of STAT_FILTERS) {
+		for (const stat of ITEM_TAG_FILTERS) {
 			expect(stat.tags.every((tag) => inData.has(tag))).toBe(true);
 			expect(filterItems(shop, { stats: [stat.key] }).length).toBeGreaterThan(
 				0,

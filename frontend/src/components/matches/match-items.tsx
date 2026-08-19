@@ -1,7 +1,7 @@
 import {
-	QUEST_REWARD_FALLBACK,
-	QUEST_REWARD_NAMES,
-} from "./quest-reward.constant";
+	MATCH_QUEST_REWARD_FALLBACK,
+	MATCH_QUEST_REWARD_NAMES,
+} from "./constants/match-quest-reward.constant";
 
 const itemImage = (item: number) => {
 	return `https://ddragon.leagueoflegends.com/cdn/16.15.1/img/item/${item}.png`;
@@ -23,7 +23,7 @@ const ItemIcon = (props: { item: number; label?: string }) => (
 	/>
 );
 
-interface ItemsProps {
+interface MatchItemsProps {
 	/** The seven inventory slots: six items followed by the trinket. */
 	items: number[];
 	/**
@@ -33,11 +33,12 @@ interface ItemsProps {
 	questReward?: number | null;
 }
 
-export const Items = (props: ItemsProps) => {
+export const MatchItems = (props: MatchItemsProps) => {
 	const bought = props.items.slice(0, 6);
 	const trinket = props.items[6];
 	const questName = props.questReward
-		? (QUEST_REWARD_NAMES[props.questReward] ?? QUEST_REWARD_FALLBACK)
+		? (MATCH_QUEST_REWARD_NAMES[props.questReward] ??
+			MATCH_QUEST_REWARD_FALLBACK)
 		: null;
 
 	return (
@@ -49,7 +50,7 @@ export const Items = (props: ItemsProps) => {
 			    pull into the bundle for alt text alone, so the grid is labelled as a
 			    whole and the icons are marked decorative until the assets move to
 			    the backend. */}
-			<ul className="grid grid-cols-3 gap-0.5" aria-label="Items">
+			<ul className="grid grid-cols-3 gap-0.5" aria-label="MatchItems">
 				{bought.map((item, index) => (
 					// biome-ignore lint/suspicious/noArrayIndexKey: inventory slots are positional
 					<li key={index}>

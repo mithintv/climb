@@ -1,17 +1,17 @@
-import { Champion } from "@/components/match/champion";
+import { MatchChampion } from "@/components/matches/match-champion";
 import { cn } from "@/lib/utils";
-import type { MatchDto } from "@/types/riot";
+import type { IMatch } from "@/types/riot/i-match.type";
 
 import { championStats, winRate } from "./summoner.utils";
 
-interface IChampionStatsProps {
-	matches: MatchDto[];
+interface ISummonerChampionStatsProps {
+	matches: IMatch[];
 	puuid: string;
 	/** How many champions to list before stopping. */
 	limit?: number;
 }
 
-export const ChampionStats = (props: IChampionStatsProps) => {
+export const SummonerChampionStats = (props: ISummonerChampionStatsProps) => {
 	const stats = championStats(props.matches, props.puuid);
 	if (stats.length === 0) return null;
 
@@ -39,7 +39,7 @@ export const ChampionStats = (props: IChampionStatsProps) => {
 							key={stat.championName}
 							className="flex items-center gap-3 rounded-lg border border-white/5 bg-card/40 px-3 py-2"
 						>
-							<Champion
+							<MatchChampion
 								name={stat.championName}
 								className="size-8 shrink-0 rounded-md border border-white/10"
 							/>

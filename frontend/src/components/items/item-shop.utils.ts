@@ -1,16 +1,16 @@
 import { ICON_BASE } from "./constants/icon-base.constant";
 import { ITEM_DATA } from "./constants/item-data.constant";
+import { ITEM_TAG_FILTERS } from "./constants/item-tag-filter.constant";
 import { ITEM_VERSIONS } from "./constants/item-version.constant";
 import {
 	ALT_MODE_ID_FLOOR,
 	CLASSIC_RIFT,
 	SUMMONERS_RIFT,
 } from "./constants/shop-visibility.constant";
-import { STAT_FILTERS } from "./constants/stat-filter.constant";
 import type { IDDragonRawItem } from "./types/i-ddragon-raw-item.type";
 import type { IItemSearch } from "./types/i-item-search.type";
+import type { IItemTagFilter } from "./types/i-item-tag-filter.type";
 import type { IShopItem } from "./types/i-shop-item.type";
-import type { IStatFilter } from "./types/i-stat-filter.type";
 import type { ITierGroup } from "./types/i-tier-group.type";
 import type { ItemSort } from "./types/item-sort.type";
 import { ITEM_TIERS, type ItemTier } from "./types/item-tier.type";
@@ -140,8 +140,8 @@ export const filterItems = (
 	search: IItemSearch,
 ): IShopItem[] => {
 	const selected = (search.stats ?? [])
-		.map((key) => STAT_FILTERS.find((stat) => stat.key === key))
-		.filter((stat): stat is IStatFilter => Boolean(stat));
+		.map((key) => ITEM_TAG_FILTERS.find((stat) => stat.key === key))
+		.filter((stat): stat is IItemTagFilter => Boolean(stat));
 	const query = search.q?.trim().toLowerCase();
 
 	return items.filter((item) => {

@@ -1,4 +1,4 @@
-import type { IStatFilter } from "../types/i-stat-filter.type";
+import type { IItemTagFilter } from "../types/i-item-tag-filter.type";
 
 /**
  * The stat rail, in the client's own order and grouping — offence, magic, then
@@ -7,7 +7,7 @@ import type { IStatFilter } from "../types/i-stat-filter.type";
  * it; the tags describing no stat (Vision, Jungle, GoldPer…) have no rail
  * entry, and are reached through the tier tabs and the search box.
  */
-export const STAT_FILTER_GROUPS: IStatFilter[][] = [
+export const ITEM_TAG_FILTER_GROUPS: IItemTagFilter[][] = [
 	[
 		{ key: "attack-damage", label: "Attack Damage", tags: ["Damage"] },
 		{
@@ -59,4 +59,4 @@ export const STAT_FILTER_GROUPS: IStatFilter[][] = [
 ];
 
 /** The rail flattened, for looking a filter up by the key the URL carries. */
-export const STAT_FILTERS: IStatFilter[] = STAT_FILTER_GROUPS.flat();
+export const ITEM_TAG_FILTERS: IItemTagFilter[] = ITEM_TAG_FILTER_GROUPS.flat();

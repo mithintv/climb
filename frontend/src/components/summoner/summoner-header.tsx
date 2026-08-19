@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { LeagueEntry } from "@/types/riot";
+import type { ILeagueEntry } from "@/types/riot/i-league-entry.type";
 
 import {
 	formatRank,
@@ -25,7 +25,7 @@ const TIER_COLOR: Record<string, string> = {
 interface ISummonerHeaderProps {
 	gameName: string;
 	tagLine: string;
-	ranks: LeagueEntry[];
+	ranks: ILeagueEntry[];
 }
 
 export const SummonerHeader = (props: ISummonerHeaderProps) => {
@@ -51,7 +51,7 @@ export const SummonerHeader = (props: ISummonerHeaderProps) => {
 	);
 };
 
-const RankSummary = (props: { entry: LeagueEntry }) => {
+const RankSummary = (props: { entry: ILeagueEntry }) => {
 	const { entry } = props;
 	const rate = winRate(entry.wins, entry.losses);
 

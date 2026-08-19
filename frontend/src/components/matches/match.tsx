@@ -16,30 +16,31 @@ import {
 } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
 
-import type {
-	MatchDto,
-	MatchNotes,
-	MatchParticipant,
-	MatchState,
-} from "../types/riot";
-import { Champion } from "./match/champion";
-import { Items } from "./match/items";
+import type { IMatch } from "../../types/riot/i-match.type";
+import type { IMatchNotes } from "../../types/riot/i-match-notes.type";
+import type { IMatchParticipant } from "../../types/riot/i-match-participant.type";
+import type { MatchState } from "../../types/riot/match-state.type";
+import {
+	formatGameMode,
+	MATCH_QUEUE_NAMES,
+} from "./constants/match-queue.constant";
 import {
 	formatDuration,
 	formatGold,
 	formatRelativeTime,
 	kdaRatio,
-} from "./match/match.utils";
-import { formatGameMode, QUEUE_NAMES } from "./match/queue.constant";
-import { Runes } from "./match/runes";
-import { SummonerSpells } from "./match/summoner-spells";
-import { Teams } from "./match/teams";
+} from "./match.utils";
+import { MatchChampion } from "./match-champion";
+import { MatchItems } from "./match-items";
+import { MatchRunes } from "./match-runes";
+import { MatchSummonerSpells } from "./match-summoner-spells";
+import { MatchTeams } from "./match-teams";
 
 const POSITION_ORDER = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
 
 // Sorting rather than looking each position up keeps every participant, even in
 // modes like ARAM where `teamPosition` is empty for everyone.
-const byPosition = (team: MatchParticipant[]) =>
+const byPosition = (team: IMatchParticipant[]) =>
 	[...team].sort(
 		(a, b) =>
 			POSITION_ORDER.indexOf(a.teamPosition) -
@@ -52,9 +53,9 @@ const byPosition = (team: MatchParticipant[]) =>
  * handed, so the champion stats can aggregate the same payloads.
  */
 const toMatchState = (
-	match: MatchDto,
+	match: IMatch,
 	puuid: string,
-	notes: MatchNotes | null,
+	notes: IMatchNotes | null,
 ): MatchState => {
 	const player = match.info.participants.find(
 		(participant) => participant.puuid === puuid,
@@ -134,7 +135,7 @@ export const MatchSkeleton = () => (
 );
 
 interface MatchProps {
-	match: MatchDto;
+	match: IMatch;
 	/** Whose line in the match to feature. */
 	puuid: string;
 }
@@ -156,7 +157,8 @@ export const Match = (props: MatchProps) => {
 	const ratio = kdaRatio(player.kills, player.deaths, player.assists);
 	const totalCs = player.totalMinionsKilled + player.neutralMinionsKilled;
 	const csPerMin = totalCs / (game.gameDuration / 60);
-	const queueName = QUEUE_NAMES[game.queueId] ?? formatGameMode(game.gameMode);
+	const queueName =
+		MATCH_QUEUE_NAMES[game.queueId] ?? formatGameMode(game.gameMode);
 
 	return (
 		<div
@@ -198,7 +200,7 @@ export const Match = (props: MatchProps) => {
 
 					<div className="flex shrink-0 items-center gap-1.5">
 						<div className="relative">
-							<Champion
+							<MatchChampion
 								id={player.championId}
 								name={player.championName}
 								className="size-12 rounded-lg border border-white/10"
@@ -207,11 +209,11 @@ export const Match = (props: MatchProps) => {
 								{player.champLevel}
 							</span>
 						</div>
-						<SummonerSpells
+						<MatchSummonerSpells
 							spell1={player.summoner1Id}
 							spell2={player.summoner2Id}
 						/>
-						<Runes
+						<MatchRunes
 							runes={player.perks.styles}
 							primaryId={player.perks.styles[0].style}
 							secondaryId={player.perks.styles[1].style}
@@ -259,7 +261,7 @@ export const Match = (props: MatchProps) => {
 						</div>
 					</div>
 
-					<Items
+					<MatchItems
 						items={[
 							player.item0,
 							player.item1,
@@ -276,7 +278,7 @@ export const Match = (props: MatchProps) => {
 					    matter more on a narrow screen than the other nine players. The
 					    narrower stat block moved this from lg to md. */}
 					<div className="ml-auto hidden shrink-0 md:block">
-						<Teams match={matchData} />
+						<MatchTeams match={matchData} />
 					</div>
 				</div>
 
@@ -304,7 +306,7 @@ export const Match = (props: MatchProps) => {
 					<div className="flex flex-row text-center">
 						<div className="w-1/4">
 							<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-								Champion Knowledge
+								MatchChampion Knowledge
 							</p>
 							<ul className="mt-1 text-sm">
 								{matchData.notes
@@ -336,13 +338,13 @@ export const Match = (props: MatchProps) => {
 							<Label className="w-20 px-2" htmlFor="tags">
 								Category
 							</Label>
-							<Select name="tags" defaultValue="Champion Knowledge">
+							<Select name="tags" defaultValue="MatchChampion Knowledge">
 								<SelectTrigger id="tags" className="w-64">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="Champion Knowledge">
-										Champion Knowledge
+									<SelectItem value="MatchChampion Knowledge">
+										MatchChampion Knowledge
 									</SelectItem>
 									<SelectItem value="Laning">Laning</SelectItem>
 									<SelectItem value="Team Fighting">Team Fighting</SelectItem>

@@ -1,4 +1,4 @@
-import { ItemDetails } from "../../match/item-details";
+import { MatchItemDetails } from "../../matches/match-item-details";
 import { getItem } from "../item-shop.utils";
 import type { IShopItem } from "../types/i-shop-item.type";
 import { BuildRow } from "./build-row";
@@ -52,7 +52,7 @@ export const ItemPanel = (props: IItemPanelProps) => {
 			</div>
 
 			<div className="mt-4 text-sm leading-relaxed">
-				<ItemDetails description={body} />
+				<MatchItemDetails description={body} />
 			</div>
 			{active && (
 				// Data Dragon separates the active with `<br>`s inside one blob,
@@ -63,7 +63,7 @@ export const ItemPanel = (props: IItemPanelProps) => {
 						ACTIVE
 					</h3>
 					<div className="text-sm leading-relaxed">
-						<ItemDetails description={active} />
+						<MatchItemDetails description={active} />
 					</div>
 				</div>
 			)}

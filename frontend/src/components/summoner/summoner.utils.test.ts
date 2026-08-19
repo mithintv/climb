@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { LeagueEntry, MatchDto, MatchParticipant } from "@/types/riot";
+import type { ILeagueEntry } from "@/types/riot/i-league-entry.type";
+import type { IMatch } from "@/types/riot/i-match.type";
+import type { IMatchParticipant } from "@/types/riot/i-match-participant.type";
 
 import {
 	championStats,
@@ -11,7 +13,7 @@ import {
 	winRate,
 } from "./summoner.utils";
 
-const entry = (over: Partial<LeagueEntry>): LeagueEntry => ({
+const entry = (over: Partial<ILeagueEntry>): ILeagueEntry => ({
 	queueType: "RANKED_SOLO_5x5",
 	tier: "DIAMOND",
 	rank: "I",
@@ -24,8 +26,8 @@ const entry = (over: Partial<LeagueEntry>): LeagueEntry => ({
 const match = (
 	puuid: string,
 	championName: string,
-	over: Partial<MatchParticipant> = {},
-): MatchDto =>
+	over: Partial<IMatchParticipant> = {},
+): IMatch =>
 	({
 		info: {
 			participants: [
@@ -37,10 +39,10 @@ const match = (
 					deaths: 2,
 					assists: 7,
 					...over,
-				} as MatchParticipant,
+				} as IMatchParticipant,
 			],
 		},
-	}) as MatchDto;
+	}) as IMatch;
 
 describe("riot id params", () => {
 	it("round-trips a plain riot id", () => {

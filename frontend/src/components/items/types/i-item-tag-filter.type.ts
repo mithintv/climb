@@ -1,5 +1,5 @@
 /** One entry of the stat rail: a display label over a set of asset tags. */
-export interface IStatFilter {
+export interface IItemTagFilter {
 	/** Stable key; this is what travels in the URL. */
 	key: string;
 	label: string;

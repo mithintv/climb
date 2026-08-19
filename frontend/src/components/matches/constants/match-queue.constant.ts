@@ -4,7 +4,7 @@
  * missing falls back to the payload's `gameMode`, so this only has to cover what
  * is actually queueable today.
  */
-export const QUEUE_NAMES: Record<number, string> = {
+export const MATCH_QUEUE_NAMES: Record<number, string> = {
 	400: "Normal Draft",
 	420: "Ranked Solo",
 	430: "Normal Blind",

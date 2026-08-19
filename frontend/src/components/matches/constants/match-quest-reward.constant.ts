@@ -7,7 +7,7 @@
  * `roleBoundItem` also carries ordinary item ids — those fall back to the
  * generic label rather than being listed here and going stale every patch.
  */
-export const QUEST_REWARD_NAMES: Record<number, string> = {
+export const MATCH_QUEST_REWARD_NAMES: Record<number, string> = {
 	1206: "Mid Lane Quest Reward",
 	1208: "Support Quest Reward",
 	1209: "Jungle Quest Reward",
@@ -16,4 +16,4 @@ export const QUEST_REWARD_NAMES: Record<number, string> = {
 };
 
 /** Shown for a reward that is an ordinary item, such as bot lane's boots. */
-export const QUEST_REWARD_FALLBACK = "Lane quest reward";
+export const MATCH_QUEST_REWARD_FALLBACK = "Lane quest reward";

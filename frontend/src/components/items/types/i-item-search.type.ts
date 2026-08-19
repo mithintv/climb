@@ -7,7 +7,7 @@ export interface IItemSearch {
 	q?: string;
 	/** Selected tier tab; absent is the all-items tab. */
 	tier?: ItemTier;
-	/** Selected `IStatFilter` keys, which stack. */
+	/** Selected `IItemTagFilter` keys, which stack. */
 	stats?: string[];
 	sort?: ItemSort;
 	/** Id of the item the detail panel is open on. */

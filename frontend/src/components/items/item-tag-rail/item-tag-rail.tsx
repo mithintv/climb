@@ -2,25 +2,25 @@ import { FilterXIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { STAT_FILTER_GROUPS } from "../constants/stat-filter.constant";
+import { ITEM_TAG_FILTER_GROUPS } from "../constants/item-tag-filter.constant";
 
 // The client's own rail icons, sliced out of its texture atlas
 // (`game/assets/ux/itemshop/itemshop_texture_atlas4.png` on CommunityDragon).
-// Data Dragon serves no stat art at all — every `/img/ui/*` path 403s — and the
+// Data Dragon serves no tag art at all — every `/img/ui/*` path 403s — and the
 // atlas is packed without a manifest, so the glyphs are committed as files
 // rather than hotlinked and re-sliced on every patch.
 //
-// The atlas carries five colour variants per stat. Two are used: the neutral
+// The atlas carries five colour variants per tag. Two are used: the neutral
 // grey the rail sits in, and the coloured one that marks a filter as on. Both
-// sets share a filename per stat, so they are read off disk by name instead of
+// sets share a filename per tag, so they are read off disk by name instead of
 // through 28 hand-written imports.
 
 /**
- * Key one variant directory's glob result by item type, reducing each module
+ * Key one variant directory's glob result by item tag, reducing each module
  * path to the bare filename the colour and grey sets share
  * (`.../mono/on-hit.png` → `on-hit`), which is also the key the rail filters on.
  */
-const byItemType = (modules: Record<string, unknown>): Record<string, string> =>
+const byItemTag = (modules: Record<string, unknown>): Record<string, string> =>
 	Object.fromEntries(
 		Object.entries(modules).map(([path, url]) => [
 			path.slice(path.lastIndexOf("/") + 1, -".png".length),
@@ -28,8 +28,8 @@ const byItemType = (modules: Record<string, unknown>): Record<string, string> =>
 		]),
 	);
 
-/** Icon per item type, coloured — the state a selected filter is drawn in. */
-const ITEM_TYPE_ICONS_COLOR = byItemType(
+/** Icon per item tag, coloured — the state a selected filter is drawn in. */
+const ITEM_TAG_ICONS_COLOR = byItemTag(
 	import.meta.glob("../../../assets/icons/item-tags/color/*.png", {
 		eager: true,
 		import: "default",
@@ -37,8 +37,8 @@ const ITEM_TYPE_ICONS_COLOR = byItemType(
 	}),
 );
 
-/** Icon per item type, grey — the rail's resting state. */
-const ITEM_TYPE_ICONS_MONO = byItemType(
+/** Icon per item tag, grey — the rail's resting state. */
+const ITEM_TAG_ICONS_MONO = byItemTag(
 	import.meta.glob("../../../assets/icons/item-tags/mono/*.png", {
 		eager: true,
 		import: "default",
@@ -54,37 +54,37 @@ interface IItemTagRailProps {
 
 export const ItemTagRail = (props: IItemTagRailProps) => (
 	<nav
-		aria-label="Filter by stat"
+		aria-label="Filter by tag"
 		className="flex w-12 shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-white/10 border-r py-3"
 	>
 		<button
 			type="button"
 			onClick={props.onClear}
 			disabled={props.selected.length === 0}
-			aria-label="Clear stat filters"
-			title="Clear stat filters"
+			aria-label="Clear tag filters"
+			title="Clear tag filters"
 			className="flex size-9 items-center justify-center rounded-full border border-white/15 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
 		>
 			<FilterXIcon className="size-4" aria-hidden="true" />
 		</button>
 
-		{STAT_FILTER_GROUPS.map((group) => (
+		{ITEM_TAG_FILTER_GROUPS.map((group) => (
 			<div
 				key={group[0].key}
 				// A rule above each group, matching the client — including the one
 				// separating the first group from the clear button.
 				className="mt-1.5 flex w-8 flex-col items-center gap-0 border-white/10 border-t pt-1.5"
 			>
-				{group.map((stat) => {
-					const isSelected = props.selected.includes(stat.key);
+				{group.map((tag) => {
+					const isSelected = props.selected.includes(tag.key);
 					return (
 						<button
-							key={stat.key}
+							key={tag.key}
 							type="button"
 							aria-pressed={isSelected}
-							aria-label={stat.label}
-							title={stat.label}
-							onClick={() => props.onToggle(stat.key)}
+							aria-label={tag.label}
+							title={tag.label}
+							onClick={() => props.onToggle(tag.key)}
 							// Selection reads off the icon itself — coloured when on, grey
 							// when off — so the button carries no box of its own. The
 							// atlas has no accent colour for Ability Haste or Movement,
@@ -98,8 +98,8 @@ export const ItemTagRail = (props: IItemTagRailProps) => (
 							<img
 								src={
 									isSelected
-										? ITEM_TYPE_ICONS_COLOR[stat.key]
-										: ITEM_TYPE_ICONS_MONO[stat.key]
+										? ITEM_TAG_ICONS_COLOR[tag.key]
+										: ITEM_TAG_ICONS_MONO[tag.key]
 								}
 								alt=""
 								className="size-5 object-contain"

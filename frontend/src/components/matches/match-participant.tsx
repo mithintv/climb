@@ -1,17 +1,17 @@
 import { cn } from "@/lib/utils";
 
-import type { MatchParticipant } from "../../types/riot";
-import { Champion } from "./champion";
+import type { IMatchParticipant } from "../../types/riot/i-match-participant.type";
+import { MatchChampion } from "./match-champion";
 
-interface ParticipantProps {
-	player: MatchParticipant;
+interface MatchParticipantProps {
+	player: IMatchParticipant;
 	/** Highlights the searched player's row in the team lists. */
 	isSearchedPlayer: boolean;
 	/** Mirrors the layout so the two teams face each other across the role icons. */
 	align: "left" | "right";
 }
 
-export const Participant = (props: ParticipantProps) => {
+export const MatchParticipant = (props: MatchParticipantProps) => {
 	// Riot returns "" for summonerName on every participant now; riotIdGameName
 	// is the live name, and the previous card rendered ten blank rows without it.
 	const name = props.player.riotIdGameName || props.player.championName;
@@ -24,7 +24,7 @@ export const Participant = (props: ParticipantProps) => {
 				props.align === "right" && "flex-row-reverse",
 			)}
 		>
-			<Champion
+			<MatchChampion
 				name={props.player.championName}
 				className="size-4 shrink-0 rounded-sm"
 			/>

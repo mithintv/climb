@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import type { LeagueEntry, MatchDto } from "@/types/riot";
+import type { ILeagueEntry } from "@/types/riot/i-league-entry.type";
+import type { IMatch } from "@/types/riot/i-match.type";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
 
@@ -15,9 +16,9 @@ interface IAccount {
 
 export interface ISummonerData {
 	account: IAccount | null;
-	ranks: LeagueEntry[];
+	ranks: ILeagueEntry[];
 	/** Full payloads, not ids — the champion stats aggregate over them. */
-	matches: MatchDto[];
+	matches: IMatch[];
 	loading: boolean;
 	error: string | null;
 }
@@ -66,7 +67,7 @@ export const useSummoner = (gameName: string, tagLine: string) => {
 				setData((previous) => ({ ...previous, account }));
 
 				const [ranks, matchIds] = await Promise.all([
-					getJson(`/accounts/${account.puuid}/rank`) as Promise<LeagueEntry[]>,
+					getJson(`/accounts/${account.puuid}/rank`) as Promise<ILeagueEntry[]>,
 					getJson(
 						`/matches?puuid=${account.puuid}&start=0&count=${MATCH_COUNT}`,
 					) as Promise<string[]>,
@@ -75,7 +76,7 @@ export const useSummoner = (gameName: string, tagLine: string) => {
 				setData((previous) => ({ ...previous, ranks }));
 
 				const matches = await Promise.all(
-					matchIds.map((id) => getJson(`/matches/${id}`) as Promise<MatchDto>),
+					matchIds.map((id) => getJson(`/matches/${id}`) as Promise<IMatch>),
 				);
 				if (!active) return;
 

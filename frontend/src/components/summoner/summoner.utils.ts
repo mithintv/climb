@@ -1,4 +1,6 @@
-import type { LeagueEntry, MatchDto, MatchParticipant } from "@/types/riot";
+import type { ILeagueEntry } from "@/types/riot/i-league-entry.type";
+import type { IMatch } from "@/types/riot/i-match.type";
+import type { IMatchParticipant } from "@/types/riot/i-match-participant.type";
 
 /**
  * A riot id in a URL. `#` is a fragment delimiter, so the path uses a hyphen —
@@ -24,11 +26,11 @@ export const parseRiotIdParam = (param: string) => {
 export const SOLO_QUEUE = "RANKED_SOLO_5x5";
 
 /** Picks solo queue if it is there, else the first queue with any games. */
-export const primaryEntry = (entries: LeagueEntry[]) =>
+export const primaryEntry = (entries: ILeagueEntry[]) =>
 	entries.find((entry) => entry.queueType === SOLO_QUEUE) ?? entries[0];
 
 /** "DIAMOND" + "I" → "Diamond I". Master and above have no meaningful division. */
-export const formatRank = (entry: LeagueEntry) => {
+export const formatRank = (entry: ILeagueEntry) => {
 	const tier = entry.tier.charAt(0) + entry.tier.slice(1).toLowerCase();
 	const divisionless = ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(
 		entry.tier,
@@ -58,13 +60,13 @@ export interface IChampionStat {
  * "recent" rather than presented as a season record.
  */
 export const championStats = (
-	matches: MatchDto[],
+	matches: IMatch[],
 	puuid: string,
 ): IChampionStat[] => {
 	const byChampion = new Map<string, IChampionStat>();
 
 	for (const match of matches) {
-		const player: MatchParticipant | undefined = match.info.participants.find(
+		const player: IMatchParticipant | undefined = match.info.participants.find(
 			(participant) => participant.puuid === puuid,
 		);
 		if (!player) continue;
