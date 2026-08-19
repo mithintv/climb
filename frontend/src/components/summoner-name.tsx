@@ -1,66 +1,37 @@
+import { useNavigate } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
+import { toRiotIdParam } from "@/components/summoner/summoner.utils";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 
-import { MatchList } from "./match-list";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
-
-const fetchPUUID = async (summonerName: string): Promise<string> => {
-	console.debug("Requesting PUUID", { summonerName });
-	const response = await fetch(
-		`${backendUrl}/riot/puuid/${encodeURIComponent(summonerName)}`,
-	);
-	const data = await response.json();
-	if (!response.ok) {
-		console.error("Failed to fetch PUUID", {
-			summonerName,
-			status: response.status,
-			body: data,
-		});
-	}
-	return data.puuid;
-};
-
-const fetchMatches = async (puuid: string): Promise<string[]> => {
-	console.debug("Requesting matches", { puuid, start: 0, count: 5 });
-	const response = await fetch(
-		`${backendUrl}/riot/matches/${puuid}?start=0&count=5`,
-	);
-	const matchesArray = await response.json();
-	if (!Array.isArray(matchesArray)) {
-		console.error("Failed to fetch matches", {
-			puuid,
-			status: response.status,
-			body: matchesArray,
-		});
-		return [];
-	}
-	return matchesArray;
-};
-
+/**
+ * The search box. It resolves nothing itself — it routes to the profile, so a
+ * looked-up player has a URL that can be shared, refreshed and gone back to.
+ */
 export const SummonerName = () => {
-	const [puuid, setPuuid] = useState("");
-	const [matches, setShowMatches] = useState<string[]>([]);
+	const navigate = useNavigate();
 	const [summonerName, setSummonerName] = useState("");
-	const submitHandler = async (event: FormEvent) => {
-		event.preventDefault();
-		if (!summonerName) return;
-		const id = await fetchPUUID(summonerName);
-		setPuuid(id);
-		const matchHistory = await fetchMatches(id);
-		setShowMatches(matchHistory);
-	};
 
-	const hasMatches = matches.length > 0;
+	const submitHandler = (event: FormEvent) => {
+		event.preventDefault();
+		const typed = summonerName.trim();
+		if (!typed) return;
+
+		// A tag is optional in the box; NA1 is the default the backend uses too.
+		const [gameName, tagLine = "NA1"] = typed.split("#");
+		if (!gameName) return;
+
+		navigate({
+			to: "/summoner/$riotId",
+			params: { riotId: toRiotIdParam(gameName, tagLine) },
+		});
+	};
 
 	return (
 		<div className="flex flex-col items-center px-4">
-			<div
-				className={`flex w-full flex-col items-center transition-all duration-300 ${hasMatches ? "mt-10" : "mt-36"}`}
-			>
+			<div className="mt-36 flex w-full flex-col items-center">
 				<h1 className="bg-linear-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text font-black text-6xl text-transparent tracking-tight">
 					Climb
 				</h1>
@@ -88,15 +59,6 @@ export const SummonerName = () => {
 					</Button>
 				</form>
 			</div>
-			{hasMatches && (
-				<div className="m-auto mt-4 flex flex-col text-xs">
-					<MatchList
-						puuid={puuid}
-						matches={matches}
-						summonerName={summonerName}
-					/>
-				</div>
-			)}
 		</div>
 	);
 };

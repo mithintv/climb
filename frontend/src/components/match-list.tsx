@@ -1,24 +1,37 @@
-import { Match } from "./match";
+import type { MatchDto } from "@/types/riot";
+
+import { Match, MatchSkeleton } from "./match";
 
 interface MatchListProps {
 	puuid: string;
-	summonerName: string;
-	matches: string[];
+	matches: MatchDto[];
+	loading: boolean;
 }
 
 export const MatchList = (props: MatchListProps) => {
+	if (props.loading) {
+		return (
+			<div className="flex flex-col gap-2">
+				{[0, 1, 2, 3, 4].map((placeholder) => (
+					<MatchSkeleton key={placeholder} />
+				))}
+			</div>
+		);
+	}
+
+	if (props.matches.length === 0) {
+		return (
+			<p className="rounded-lg border border-white/5 bg-card/40 px-4 py-6 text-center text-muted-foreground text-sm">
+				No recent matches.
+			</p>
+		);
+	}
+
 	return (
-		<div className="my-4">
-			{props.matches.map((match) => {
-				return (
-					<Match
-						key={match}
-						puuid={props.puuid}
-						summonerName={props.summonerName}
-						id={match}
-					/>
-				);
-			})}
+		<div className="flex flex-col gap-2">
+			{props.matches.map((match) => (
+				<Match key={match.metadata.matchId} match={match} puuid={props.puuid} />
+			))}
 		</div>
 	);
 };

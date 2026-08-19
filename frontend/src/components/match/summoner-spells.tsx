@@ -29,9 +29,19 @@ export const SummonerSpells = (props: SummonerSpellsProps) => {
 	if (!spell1 || !spell2) return null;
 
 	return (
-		<div className="my-px space-y-2">
-			<img className="w-5" src={summonerSpellImage(spell1)} alt={spell1.name} />
-			<img className="w-5" src={summonerSpellImage(spell2)} alt={spell2.name} />
+		<div className="flex flex-col gap-0.5">
+			<img
+				className="size-5.5 rounded border border-white/10"
+				src={summonerSpellImage(spell1)}
+				alt={spell1.name}
+				loading="lazy"
+			/>
+			<img
+				className="size-5.5 rounded border border-white/10"
+				src={summonerSpellImage(spell2)}
+				alt={spell2.name}
+				loading="lazy"
+			/>
 		</div>
 	);
 };

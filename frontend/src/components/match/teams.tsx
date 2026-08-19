@@ -1,4 +1,5 @@
 import type { MatchState } from "../../types/riot";
+import { LANE_ICONS } from "./lane-icon.constant";
 import { Participant } from "./participant";
 
 interface TeamsProps {
@@ -6,51 +7,46 @@ interface TeamsProps {
 }
 
 export const Teams = (props: TeamsProps) => {
+	if (!props.match.data) return null;
+
+	const searchedPuuid = props.match.player.puuid;
+
 	return (
-		<div className="my-1 flex flex-row justify-center">
+		<div className="flex flex-row items-center gap-1.5">
 			<div className="flex flex-col">
-				{props.match.data &&
-					props.match.team100.map((player) => {
-						return <Participant key={player.summonerId} player={player} />;
-					})}
+				{props.match.team100.map((player) => (
+					<Participant
+						key={player.puuid}
+						player={player}
+						align="right"
+						isSearchedPlayer={player.puuid === searchedPuuid}
+					/>
+				))}
 			</div>
-			<div className="w-7">
-				<img
-					key={0}
-					className="m-auto w-4/12 pt-1"
-					alt="lane position"
-					src="https://cdn.mobalytics.gg/assets/common/icons/lol-roles/16-top-faded.svg"
-				/>
-				<img
-					key={1}
-					className="m-auto w-5/12 pt-1"
-					alt="lane position"
-					src="https://cdn.mobalytics.gg/assets/common/icons/lol-roles/16-jg-faded.svg"
-				/>
-				<img
-					key={2}
-					className="m-auto w-4/12 pt-1.5"
-					alt="lane position"
-					src="https://cdn.mobalytics.gg/assets/common/icons/lol-roles/16-mid-faded.svg"
-				/>
-				<img
-					key={3}
-					className="m-auto w-5/12 pt-1.5"
-					alt="lane position"
-					src="https://cdn.mobalytics.gg/assets/common/icons/lol-roles/16-bot-faded.svg"
-				/>
-				<img
-					key={4}
-					className="m-auto w-6/12 pt-1.5"
-					alt="lane position"
-					src="https://cdn.mobalytics.gg/assets/common/icons/lol-roles/16-sup-faded.svg"
-				/>
+			{/* One icon per row, marking the role the two facing participants played.
+			    Decorative: the row it labels already names both players. */}
+			<div className="flex flex-col">
+				{LANE_ICONS.map((lane) => (
+					<div key={lane.position} className="flex h-4.5 items-center">
+						<img
+							className="size-3 opacity-60"
+							src={lane.url}
+							alt=""
+							title={lane.position}
+							loading="lazy"
+						/>
+					</div>
+				))}
 			</div>
 			<div className="flex flex-col">
-				{props.match.data &&
-					props.match.team200.map((player) => {
-						return <Participant key={player.summonerId} player={player} />;
-					})}
+				{props.match.team200.map((player) => (
+					<Participant
+						key={player.puuid}
+						player={player}
+						align="left"
+						isSearchedPlayer={player.puuid === searchedPuuid}
+					/>
+				))}
 			</div>
 		</div>
 	);
