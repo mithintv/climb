@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 
 import { DRIZZLE } from "./../../core/database/database.constant.ts";
 import type { Drizzle } from "./../../core/database/drizzle.ts";
-import { accounts } from "./../../core/database/schema.ts";
+import { accounts } from "./../../core/database/models/accounts.model.ts";
 
 /** An account as the Riot API describes it, before it becomes a row. */
 export interface IAccountToStore {
@@ -13,12 +13,7 @@ export interface IAccountToStore {
 	region: string;
 }
 
-/**
- * Every read and write against the `accounts` table.
- *
- * Methods are async because drizzle's proxy dialect is, even though the driver
- * underneath is synchronous — nothing here actually waits on I/O.
- */
+/** Every read and write against the `accounts` table. */
 @Injectable()
 export class AccountRepository {
 	private readonly db: Drizzle;

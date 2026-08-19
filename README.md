@@ -6,7 +6,7 @@ A League of Legends match-tracking app with a React front end and a NestJS API.
 
 This is a pnpm workspace with two packages:
 
-- `backend/` — NestJS server (port 3080) backed by SQLite
+- `backend/` — NestJS server (port 3080) backed by Postgres
 - `frontend/` — React app (Vite + Tailwind, port 5173)
 
 The backend splits three ways:
@@ -21,41 +21,79 @@ The backend splits three ways:
 
 ## Prerequisites
 
-- Node.js 24+ (the backend uses the built-in `node:sqlite` module) and [pnpm](https://pnpm.io/)
+- Node.js 24+ and [pnpm](https://pnpm.io/)
+- Docker, for the Postgres the backend saves Riot data into
 - A Riot Games API key for match/summoner lookups
 
-The database is a SQLite file at `backend/climb.db`, created and migrated on first run. It holds
-nothing that cannot be re-fetched, so deleting it is always safe.
-
-Migrations are generated from the schema, never hand-written:
+Start Postgres and provision this app's role and database:
 
 ```sh
-pnpm --filter backend db:generate   # schema.ts -> src/core/database/migrations/*.sql
+scripts/postgres.sh    # needs POSTGRES_PASSWORD in the repo-root .env
 ```
 
-`drizzle-kit` diffs `src/core/database/schema.ts` against the snapshot in `migrations/meta/` and writes
-the SQL; the app applies anything outstanding at boot and records it in Drizzle's own
-`__drizzle_migrations` table. Edit the schema, run the command, commit both. The build copies the
-folder into `dist/` because tsc emits no `.sql`.
+The container is deliberately generic — name `postgres`, the standard port, the superuser account —
+so one server is shared across apps on the machine; what belongs to climb is the `climb` role and
+database created inside it. The connection string goes in `backend/.env` as `DATABASE_URL`; see
+`backend/.env.example`. Nothing in the database is authored — every row came from the Riot API — so
+dropping it is always safe.
 
-Queries go through **Drizzle**, over the builtin `node:sqlite` driver rather than a native one.
-Drizzle ships no `node:sqlite` driver, so `src/core/database/drizzle.ts` wires its `sqlite-proxy`
-dialect to a `DatabaseSync` handle — the proxy is just "give me a function that runs SQL", which is
-what `DatabaseSync` is. Four things there are not obvious:
+One table per file under `src/core/database/models/`, and migrations are generated from them, never
+hand-written:
 
-- **Row types come from `src/core/database/schema.ts`**, via `$inferSelect` — the same file the
-  migrations are generated from, so there is one source of truth and a test that fails if the
-  schema declares a column the migrations never created.
+```sh
+pnpm --filter backend db:generate   # models/*.model.ts -> src/core/database/migrations/*.sql
+```
+
+`drizzle-kit` takes a glob, so adding a table is adding a file. It diffs the models against the
+snapshot in `migrations/meta/` and writes the SQL; the app applies anything outstanding at boot and
+records it in Drizzle's own `drizzle.__drizzle_migrations` table. Edit a model, run the command,
+commit both. The build copies the folder into `dist/` because tsc emits no `.sql`.
+
+The one place that has to list the tables by hand is `createDrizzle`, which assembles them into the
+single object drizzle wants. A `models/index.ts` re-exporting them would be a barrel, so the binding
+lives in the module that was already doing it. A table left out of that object still works with
+`db.select()` and silently vanishes from `db.query`.
+
+Queries go through **Drizzle**, over `node-postgres`. `src/core/database/drizzle.ts` binds the schema
+to a pool and exports the `Drizzle` type every repository is written against. Four things about the
+setup are not obvious:
+
+- **Row types are inferred from the models**, one per table under `src/core/database/types/`, via
+  `$inferSelect`. Those are the same files the migrations are generated from, so there is one source
+  of truth and a test that fails if a model declares a column the migrations never created.
 - **`drizzle-kit` brings esbuild in**, which ships install scripts. It works anyway because
   `pnpm-workspace.yaml` denies that script rather than blocking on it — esbuild ships prebuilt
   binaries, so nothing needs to run at install time (see AGENTS.md).
-- **Rows must be returned positionally**, not as objects — `statement.setReturnArrays(true)`, which
-  Node 24 supports natively. On a `get` miss the driver passes `undefined` through rather than an
-  empty array, because Drizzle decides "no result" by truthiness and `[]` is truthy.
-- **Transactions are serialised by a lock.** The driver is async over a synchronous,
-  single-connection database, so without it a second `BEGIN` lands inside the first transaction and
-  SQLite fails with "cannot start a transaction within a transaction". There is a test that fails
-  when the lock is removed.
+- **`bytea` is a custom type.** Drizzle 0.45 has no builtin for it, so
+  `src/core/database/bytea.ts` declares one; node-postgres already reads and writes `Buffer`, so it
+  only has to name the SQL type.
+- **Tests get a database each, not a schema each.** `drizzle-kit` writes
+  `REFERENCES "public"."matches"` into the generated SQL, so tables created in another schema would
+  have their foreign keys pointing back at `public`. `createTestDatabase` creates and drops a real
+  database per test file, which is why `scripts/postgres.sh` grants the role `CREATEDB`.
+
+### Saved match payloads
+
+`GET /matches/:matchId` saves what it fetches. The first request for a match stores it; every later
+one reads it back out of Postgres and never asks Riot again.
+
+It is deliberately not a cache — nothing expires, is evicted or is revalidated. A completed match is
+immutable, so the saved row is the record rather than a copy of one that could go stale. (Accounts
+are a cache, with a 24-hour TTL, because a riot id released by a rename can be claimed by someone
+else.)
+
+- **The response body is saved whole and byte-exact**, gzipped into `matches.payload` (85 KB → 11.8
+  KB measured). Not `jsonb`, which normalises key order and drops duplicate keys and so cannot
+  return the bytes Riot sent — and byte-exactness is what makes a field Riot adds next patch safe to
+  save today. That is also why the fetch goes through `HttpClientService.getText`, unparsed.
+- **The columns beside it are a projection**, only of what a match card renders. They are all
+  nullable and the extractors never throw: measured over 16 real payloads, participants carry 156
+  distinct keys and the set is not stable between patches, so a projection that could fail would
+  turn a Riot patch into a failed ingest. Everything is recomputable from the blob, which is why
+  there is no `match_teams` table yet and why adding a column is a re-projection rather than a
+  re-fetch.
+- **`matches` has no puuid dimension.** Fetching one match on behalf of four different participants
+  returns four byte-identical bodies, so the ten players in a game share one row.
 
 ## Running locally
 
@@ -174,7 +212,13 @@ template and a bin entry, and 160 resolve every placeholder from bin + Data Drag
 Backend environment variables (loaded via dotenv — put them in `backend/.env`):
 
 - `X_RIOT_TOKEN` — Riot Games API key, used when fetching match data
+- `DATABASE_URL` — Postgres connection string; required, and the repository tests read it too
 - `PORT` — backend port override (defaults to 3080)
+
+Repo root (`.env`, consumed by the container scripts):
+
+- `POSTGRES_PASSWORD` — the local Postgres superuser's password, used to create the `climb` role
+- `SEQ_ADMIN_PASSWORD` — the local Seq container's `admin` password
 
 Frontend:
 

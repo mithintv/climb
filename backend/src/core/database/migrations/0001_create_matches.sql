@@ -1,0 +1,60 @@
+CREATE TABLE "match_participants" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"match_row_id" integer NOT NULL,
+	"participant_index" integer NOT NULL,
+	"puuid" text NOT NULL,
+	"riot_id_game_name" text,
+	"riot_id_tagline" text,
+	"team_id" integer,
+	"team_position" text,
+	"champion_id" integer,
+	"champion_name" text,
+	"win" boolean,
+	"kills" integer,
+	"deaths" integer,
+	"assists" integer,
+	"gold_earned" integer,
+	"total_minions_killed" integer,
+	"neutral_minions_killed" integer,
+	"summoner1_id" integer,
+	"summoner2_id" integer,
+	"item0" integer,
+	"item1" integer,
+	"item2" integer,
+	"item3" integer,
+	"item4" integer,
+	"item5" integer,
+	"item6" integer,
+	"perk_primary_style" integer,
+	"perk_keystone" integer,
+	"perk_sub_style" integer,
+	"placement" integer
+);
+--> statement-breakpoint
+CREATE TABLE "matches" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"match_id" text NOT NULL,
+	"platform_id" text NOT NULL,
+	"game_id" bigint NOT NULL,
+	"data_version" text,
+	"queue_id" integer,
+	"map_id" integer,
+	"game_mode" text,
+	"game_type" text,
+	"game_version" text,
+	"game_creation" bigint,
+	"game_start_ms" bigint,
+	"game_end_ms" bigint,
+	"game_duration" integer,
+	"end_of_game_result" text,
+	"payload" "bytea" NOT NULL,
+	"payload_encoding" text NOT NULL,
+	"payload_bytes" integer NOT NULL,
+	"projection_version" integer NOT NULL,
+	"fetched_at" bigint NOT NULL,
+	CONSTRAINT "matches_match_id_unique" UNIQUE("match_id")
+);
+--> statement-breakpoint
+ALTER TABLE "match_participants" ADD CONSTRAINT "match_participants_match_row_id_matches_id_fk" FOREIGN KEY ("match_row_id") REFERENCES "public"."matches"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "match_participants_by_index" ON "match_participants" USING btree ("match_row_id","participant_index");--> statement-breakpoint
+CREATE INDEX "match_participants_by_puuid" ON "match_participants" USING btree ("puuid","match_row_id");

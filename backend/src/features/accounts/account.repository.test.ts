@@ -1,31 +1,29 @@
-import { DatabaseSync } from "node:sqlite";
-
 import { Test } from "@nestjs/testing";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { createTestDatabase } from "./../../core/database/create-test-database.ts";
 import { DRIZZLE } from "./../../core/database/database.constant.ts";
-import { applyConnectionPragmas } from "./../../core/database/db.utils.ts";
-import { createDrizzle } from "./../../core/database/drizzle.ts";
-import { runMigrations } from "./../../core/database/run-migrations.ts";
+import type { Drizzle } from "./../../core/database/drizzle.ts";
+import { accounts as accountsTable } from "./../../core/database/models/accounts.model.ts";
 import { AccountRepository } from "./account.repository.ts";
 
 let accounts: AccountRepository;
-let database: DatabaseSync;
+let db: Drizzle;
+let teardown: () => Promise<void>;
 
 beforeEach(async () => {
-	database = new DatabaseSync(":memory:");
-	applyConnectionPragmas(database);
-	const db = createDrizzle(database);
-	await runMigrations(db, database);
+	({ db, teardown } = await createTestDatabase());
 
-	// Resolved through Nest's container, over a real in-memory database — only
-	// the drizzle handle is supplied.
+	// Resolved through Nest's container, over a real database — only the drizzle
+	// handle is supplied.
 	const moduleRef = await Test.createTestingModule({
 		providers: [AccountRepository, { provide: DRIZZLE, useValue: db }],
 	}).compile();
 
 	accounts = moduleRef.get(AccountRepository);
 });
+
+afterEach(() => teardown());
 
 const account = (puuid: string, gameName: string, tagLine = "NA1") => ({
 	puuid,
@@ -51,7 +49,7 @@ describe("AccountRepository.upsert", () => {
 		await accounts.upsert(account("puuid-1", "OldName"), 1000);
 		await accounts.upsert(account("puuid-1", "NewName"), 2000);
 
-		expect(database.prepare("SELECT * FROM accounts").all()).toHaveLength(1);
+		expect(await db.select().from(accountsTable)).toHaveLength(1);
 		expect((await accounts.findByRiotId("NewName", "NA1"))?.gameName).toBe(
 			"NewName",
 		);
@@ -67,7 +65,7 @@ describe("AccountRepository.findByRiotId", () => {
 		);
 	});
 
-	it("folds case outside ASCII, which SQLite's NOCASE and lower() cannot", async () => {
+	it("folds case outside ASCII, which a case-insensitive collation cannot", async () => {
 		// The reason `game_name_key` exists as a column at all.
 		await accounts.upsert(account("puuid-2", "ÖZGÜR"), 1000);
 

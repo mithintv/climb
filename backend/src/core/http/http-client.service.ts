@@ -78,4 +78,24 @@ export class HttpClientService {
 		const response = await this.client.get<T>(url, config);
 		return response.data;
 	}
+
+	/**
+	 * A GET returning the response body as the characters that arrived, with
+	 * nothing parsed.
+	 *
+	 * `get` is the one to reach for. This exists for a body that is stored rather
+	 * than read: parsing and re-serialising JSON normalises key order, drops
+	 * duplicate keys and rewrites numbers, so a store built on `get` could not
+	 * return what the upstream actually sent. `transformResponse` is emptied
+	 * because axios parses JSON on its own otherwise, whatever `responseType`
+	 * says.
+	 */
+	async getText(url: string, config?: AxiosRequestConfig): Promise<string> {
+		const response = await this.client.get<string>(url, {
+			...config,
+			responseType: "text",
+			transformResponse: [],
+		});
+		return response.data;
+	}
 }

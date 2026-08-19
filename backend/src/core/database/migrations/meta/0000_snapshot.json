@@ -1,121 +1,126 @@
 {
-	"version": "6",
-	"dialect": "sqlite",
-	"id": "3de4c09b-5ebc-408a-b76d-8f7757608ea3",
+	"id": "704deb3a-729f-4d40-ac93-f2330df72fee",
 	"prevId": "00000000-0000-0000-0000-000000000000",
+	"version": "7",
+	"dialect": "postgresql",
 	"tables": {
-		"accounts": {
+		"public.accounts": {
 			"name": "accounts",
+			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "integer",
+					"type": "serial",
 					"primaryKey": true,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"puuid": {
 					"name": "puuid",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"game_name": {
 					"name": "game_name",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"tag_line": {
 					"name": "tag_line",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"game_name_key": {
 					"name": "game_name_key",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"tag_line_key": {
 					"name": "tag_line_key",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"region": {
 					"name": "region",
 					"type": "text",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"riot_id_checked_at": {
 					"name": "riot_id_checked_at",
-					"type": "integer",
+					"type": "bigint",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"date_created": {
 					"name": "date_created",
-					"type": "integer",
+					"type": "bigint",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				},
 				"date_updated": {
 					"name": "date_updated",
-					"type": "integer",
+					"type": "bigint",
 					"primaryKey": false,
-					"notNull": true,
-					"autoincrement": false
+					"notNull": true
 				}
 			},
 			"indexes": {
-				"accounts_puuid_unique": {
-					"name": "accounts_puuid_unique",
-					"columns": ["puuid"],
-					"isUnique": true
-				},
 				"accounts_by_riot_id": {
 					"name": "accounts_by_riot_id",
 					"columns": [
-						"game_name_key",
-						"tag_line_key",
-						"\"riot_id_checked_at\" DESC"
+						{
+							"expression": "game_name_key",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "tag_line_key",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "\"riot_id_checked_at\" DESC",
+							"asc": true,
+							"isExpression": true,
+							"nulls": "last"
+						}
 					],
-					"isUnique": false
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
 				}
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"checkConstraints": {}
-		}
-	},
-	"views": {},
-	"enums": {},
-	"_meta": {
-		"schemas": {},
-		"tables": {},
-		"columns": {}
-	},
-	"internal": {
-		"indexes": {
-			"accounts_by_riot_id": {
-				"columns": {
-					"\"riot_id_checked_at\" DESC": {
-						"isExpression": true
-					}
+			"uniqueConstraints": {
+				"accounts_puuid_unique": {
+					"name": "accounts_puuid_unique",
+					"nullsNotDistinct": false,
+					"columns": ["puuid"]
 				}
-			}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
 		}
+	},
+	"enums": {},
+	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
+	"_meta": {
+		"columns": {},
+		"schemas": {},
+		"tables": {}
 	}
 }
