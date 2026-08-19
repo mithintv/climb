@@ -112,10 +112,12 @@ Four settings are load-bearing and not obvious from the files themselves:
   all — an unparsed file is silently neither linted nor formatted — and `useImportType` is off for
   `backend/src`, because it rewrites an injectable's import to `import type` and erases the very
   class the DI container needs at runtime.
-- **Tests construct their subjects with `new`,** not `Test.createTestingModule`. Resolving by type
-  needs `design:paramtypes`, which vitest's esbuild cannot emit; the alternative was a swc
-  transformer, and that pulls a package with a native postinstall script into the tree. The DI
-  wiring is covered by the app booting instead.
+- **Tests resolve through Nest's container** via `Test.createTestingModule`, which needs
+  `design:paramtypes` — so `backend/vitest.config.ts` swaps vitest's esbuild for a swc transformer,
+  which emits it. That matters because the `useImportType` hazard above breaks DI at runtime while
+  leaving a `new`-constructed test passing; going through the container turns it into a test
+  failure. `@swc/core` ships an install script, so `pnpm-workspace.yaml` denies it — it works from
+  its prebuilt binaries, verified emitting the metadata with the script never run.
 
 ## Riot static assets
 

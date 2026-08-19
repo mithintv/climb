@@ -1,7 +1,9 @@
 import { DatabaseSync } from "node:sqlite";
 
+import { Test } from "@nestjs/testing";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DRIZZLE } from "./../../core/database/database.constant.ts";
 import { applyConnectionPragmas } from "./../../core/database/db.utils.ts";
 import { createDrizzle } from "./../../core/database/drizzle.ts";
 import { runMigrations } from "./../../core/database/run-migrations.ts";
@@ -16,10 +18,13 @@ beforeEach(async () => {
 	const db = createDrizzle(database);
 	await runMigrations(db, database);
 
-	// Constructed directly rather than through Nest's testing module: resolving
-	// it by type would need decorator metadata, which vitest's transformer does
-	// not emit. The DI wiring is proved by the app booting, not by this test.
-	accounts = new AccountRepository(db);
+	// Resolved through Nest's container, over a real in-memory database — only
+	// the drizzle handle is supplied.
+	const moduleRef = await Test.createTestingModule({
+		providers: [AccountRepository, { provide: DRIZZLE, useValue: db }],
+	}).compile();
+
+	accounts = moduleRef.get(AccountRepository);
 });
 
 const account = (puuid: string, gameName: string, tagLine = "NA1") => ({
@@ -59,6 +64,15 @@ describe("AccountRepository.findByRiotId", () => {
 
 		expect((await accounts.findByRiotId("sNeAkY", "na69"))?.puuid).toBe(
 			"puuid-1",
+		);
+	});
+
+	it("folds case outside ASCII, which SQLite's NOCASE and lower() cannot", async () => {
+		// The reason `game_name_key` exists as a column at all.
+		await accounts.upsert(account("puuid-2", "ÖZGÜR"), 1000);
+
+		expect((await accounts.findByRiotId("özgür", "NA1"))?.puuid).toBe(
+			"puuid-2",
 		);
 	});
 

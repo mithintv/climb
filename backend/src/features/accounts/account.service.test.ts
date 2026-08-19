@@ -1,11 +1,13 @@
 import { DatabaseSync } from "node:sqlite";
 
+import { Test } from "@nestjs/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DRIZZLE } from "./../../core/database/database.constant.ts";
 import { applyConnectionPragmas } from "./../../core/database/db.utils.ts";
 import { createDrizzle } from "./../../core/database/drizzle.ts";
 import { runMigrations } from "./../../core/database/run-migrations.ts";
-import type { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
+import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import type { IRiotAccount } from "./../../integrations/riot/types/i-riot-account.type.ts";
 import { RIOT_ID_TTL_MS } from "./account.constant.ts";
 import { AccountRepository } from "./account.repository.ts";
@@ -28,12 +30,19 @@ beforeEach(async () => {
 
 	fetchAccount = vi.fn(async () => SNEAKY);
 
-	// Constructed directly rather than through Nest's testing module: resolving
-	// by type would need decorator metadata, which vitest's transformer does not
-	// emit. Only `fetchAccount` is reached, so the stub implements just that.
-	service = new AccountService(new AccountRepository(db), {
-		fetchAccount,
-	} as unknown as RiotApiService);
+	// Resolved through Nest's own container rather than `new`, so a provider
+	// missing from a module fails here instead of at boot. Only the Riot client
+	// is substituted; the repository is the real one, over an in-memory database.
+	const moduleRef = await Test.createTestingModule({
+		providers: [AccountService, AccountRepository],
+	})
+		.useMocker((token) => {
+			if (token === DRIZZLE) return db;
+			if (token === RiotApiService) return { fetchAccount };
+		})
+		.compile();
+
+	service = moduleRef.get(AccountService);
 });
 
 describe("isRiotIdFresh", () => {
