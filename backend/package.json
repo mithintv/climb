@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"build": "tsc -p tsconfig.build.json && node --eval \"require('node:fs').cpSync('src/database/migrations', 'dist/database/migrations', { recursive: true })\"",
+		"build": "tsc -p tsconfig.build.json && node --eval \"require('node:fs').cpSync('src/core/database/migrations', 'dist/core/database/migrations', { recursive: true })\"",
 		"dev": "pnpm run --parallel \"/^dev:/\"",
 		"dev:build": "tsc -w -p tsconfig.build.json --preserveWatchOutput",
 		"dev:serve": "node --watch dist/main.js",

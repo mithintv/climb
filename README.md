@@ -9,10 +9,15 @@ This is a pnpm workspace with two packages:
 - `backend/` — NestJS server (port 3080) backed by SQLite
 - `frontend/` — React app (Vite + Tailwind, port 5173)
 
-The backend is laid out by feature, as Nest expects. `src/accounts/`, `src/matches/` and
-`src/riot/` each hold one module, and a module owns its controller (request handling), its service
-(policy) and its repository (SQL). Only `src/database/` touches the database handle directly;
-everything else injects a repository.
+The backend splits three ways:
+
+- `src/features/` — what the API exposes. `accounts/` and `matches/`, each a module owning its
+  controller (request handling), service (policy) and repository (SQL).
+- `src/integrations/` — third-party APIs we consume. `riot/` has no routes of its own; features
+  inject it.
+- `src/core/` — what everything shares and nothing owns: the database, the outbound HTTP client and
+  the logger. Only `src/core/database/` touches the database handle directly; everything else
+  injects a repository.
 
 ## Prerequisites
 
@@ -25,20 +30,20 @@ nothing that cannot be re-fetched, so deleting it is always safe.
 Migrations are generated from the schema, never hand-written:
 
 ```sh
-pnpm --filter backend db:generate   # schema.ts -> src/database/migrations/*.sql
+pnpm --filter backend db:generate   # schema.ts -> src/core/database/migrations/*.sql
 ```
 
-`drizzle-kit` diffs `src/database/schema.ts` against the snapshot in `migrations/meta/` and writes
+`drizzle-kit` diffs `src/core/database/schema.ts` against the snapshot in `migrations/meta/` and writes
 the SQL; the app applies anything outstanding at boot and records it in Drizzle's own
 `__drizzle_migrations` table. Edit the schema, run the command, commit both. The build copies the
 folder into `dist/` because tsc emits no `.sql`.
 
 Queries go through **Drizzle**, over the builtin `node:sqlite` driver rather than a native one.
-Drizzle ships no `node:sqlite` driver, so `src/database/drizzle.ts` wires its `sqlite-proxy`
+Drizzle ships no `node:sqlite` driver, so `src/core/database/drizzle.ts` wires its `sqlite-proxy`
 dialect to a `DatabaseSync` handle — the proxy is just "give me a function that runs SQL", which is
 what `DatabaseSync` is. Four things there are not obvious:
 
-- **Row types come from `src/database/schema.ts`**, via `$inferSelect` — the same file the
+- **Row types come from `src/core/database/schema.ts`**, via `$inferSelect` — the same file the
   migrations are generated from, so there is one source of truth and a test that fails if the
   schema declares a column the migrations never created.
 - **`drizzle-kit` brings esbuild in**, which ships install scripts. It works anyway because

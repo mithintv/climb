@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 
-import type { IAccountRow } from "./../database/schema.ts";
-import { RIOT_ROUTING_REGION } from "./../riot/riot-api.constant.ts";
-import { RiotApiService } from "./../riot/riot-api.service.ts";
+import type { IAccountRow } from "./../../core/database/schema.ts";
+import { RIOT_ROUTING_REGION } from "./../../integrations/riot/riot-api.constant.ts";
+import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import { RIOT_ID_TTL_MS } from "./account.constant.ts";
 import { AccountRepository } from "./account.repository.ts";
 

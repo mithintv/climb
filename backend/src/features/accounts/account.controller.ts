@@ -7,8 +7,8 @@ import {
 	Query,
 } from "@nestjs/common";
 
-import type { IAccountRow } from "./../database/schema.ts";
-import { RiotApiService } from "./../riot/riot-api.service.ts";
+import type { IAccountRow } from "./../../core/database/schema.ts";
+import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import { AccountService } from "./account.service.ts";
 
 /** The response shape for an account, in the API's own casing. */

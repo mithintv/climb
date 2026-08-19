@@ -2,11 +2,11 @@ import { DatabaseSync } from "node:sqlite";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { applyConnectionPragmas } from "./../database/db.utils.ts";
-import { createDrizzle } from "./../database/drizzle.ts";
-import { runMigrations } from "./../database/run-migrations.ts";
-import type { RiotApiService } from "./../riot/riot-api.service.ts";
-import type { IRiotAccount } from "./../riot/types/i-riot-account.type.ts";
+import { applyConnectionPragmas } from "./../../core/database/db.utils.ts";
+import { createDrizzle } from "./../../core/database/drizzle.ts";
+import { runMigrations } from "./../../core/database/run-migrations.ts";
+import type { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
+import type { IRiotAccount } from "./../../integrations/riot/types/i-riot-account.type.ts";
 import { RIOT_ID_TTL_MS } from "./account.constant.ts";
 import { AccountRepository } from "./account.repository.ts";
 import { AccountService, isRiotIdFresh } from "./account.service.ts";

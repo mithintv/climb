@@ -1,9 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, sql } from "drizzle-orm";
 
-import { DRIZZLE } from "./../database/database.constant.ts";
-import type { Drizzle } from "./../database/drizzle.ts";
-import { accounts } from "./../database/schema.ts";
+import { DRIZZLE } from "./../../core/database/database.constant.ts";
+import type { Drizzle } from "./../../core/database/drizzle.ts";
+import { accounts } from "./../../core/database/schema.ts";
 
 /** An account as the Riot API describes it, before it becomes a row. */
 export interface IAccountToStore {

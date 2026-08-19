@@ -7,7 +7,7 @@ import {
 	Query,
 } from "@nestjs/common";
 
-import { RiotApiService } from "./../riot/riot-api.service.ts";
+import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 
 @Controller("matches")
 export class MatchController {

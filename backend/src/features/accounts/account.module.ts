@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 
-import { RiotModule } from "./../riot/riot.module.ts";
+import { RiotModule } from "./../../integrations/riot/riot.module.ts";
 import { AccountController } from "./account.controller.ts";
 import { AccountRepository } from "./account.repository.ts";
 import { AccountService } from "./account.service.ts";

@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common";
 import { LoggerModule } from "nestjs-pino";
 
-import { AccountModule } from "./accounts/account.module.ts";
-import { DatabaseModule } from "./database/database.module.ts";
-import { logger } from "./logging/logger.ts";
-import { MatchModule } from "./matches/match.module.ts";
+import { DatabaseModule } from "./core/database/database.module.ts";
+import { logger } from "./core/logging/logger.ts";
+import { AccountModule } from "./features/accounts/account.module.ts";
+import { MatchModule } from "./features/matches/match.module.ts";
 
 @Module({
 	imports: [

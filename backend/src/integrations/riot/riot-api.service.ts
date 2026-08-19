@@ -1,15 +1,25 @@
 import { Injectable } from "@nestjs/common";
-import axios from "axios";
 
+import { HttpClientService } from "./../../core/http/http-client.service.ts";
 import { RIOT_PLATFORM_HOST, RIOT_REGIONAL_HOST } from "./riot-api.constant.ts";
 import type { IRiotAccount } from "./types/i-riot-account.type.ts";
 import type { IRiotLeagueEntry } from "./types/i-riot-league-entry.type.ts";
 
-/** The Riot API client. Holds no policy: no caching, no fallbacks, no retries. */
+/**
+ * The Riot API client. Holds no policy: no caching, no fallbacks, no retries.
+ * Failures are translated by `HttpClientService`, so nothing here catches.
+ */
 @Injectable()
 export class RiotApiService {
-	private headers() {
-		return { "X-Riot-Token": process.env.X_RIOT_TOKEN };
+	private readonly http: HttpClientService;
+
+	constructor(http: HttpClientService) {
+		this.http = http;
+	}
+
+	/** Every Riot request carries the API key; nothing else is shared. */
+	private get config() {
+		return { headers: { "X-Riot-Token": process.env.X_RIOT_TOKEN } };
 	}
 
 	/**
@@ -20,11 +30,10 @@ export class RiotApiService {
 		gameName: string,
 		tagLine: string = "NA1",
 	): Promise<IRiotAccount> {
-		const account = await axios.get(
+		return this.http.get<IRiotAccount>(
 			`${RIOT_REGIONAL_HOST}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-			{ headers: this.headers() },
+			this.config,
 		);
-		return account.data;
 	}
 
 	/**
@@ -38,28 +47,25 @@ export class RiotApiService {
 		queue?: number,
 	): Promise<string[]> {
 		const queueParam = queue === undefined ? "" : `&queue=${queue}`;
-		const matches = await axios.get(
+		return this.http.get<string[]>(
 			`${RIOT_REGIONAL_HOST}/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?start=${start}&count=${count}${queueParam}`,
-			{ headers: this.headers() },
+			this.config,
 		);
-		return matches.data;
 	}
 
 	/** Every ranked queue the player has a standing in. A fresh account has none. */
 	async fetchLeagueEntries(puuid: string): Promise<IRiotLeagueEntry[]> {
-		const entries = await axios.get(
+		return this.http.get<IRiotLeagueEntry[]>(
 			`${RIOT_PLATFORM_HOST}/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`,
-			{ headers: this.headers() },
+			this.config,
 		);
-		return entries.data;
 	}
 
 	/** One full match-v5 payload. */
 	async fetchMatch(matchId: string) {
-		const match = await axios.get(
+		return this.http.get(
 			`${RIOT_REGIONAL_HOST}/lol/match/v5/matches/${encodeURIComponent(matchId)}`,
-			{ headers: this.headers() },
+			this.config,
 		);
-		return match.data;
 	}
 }

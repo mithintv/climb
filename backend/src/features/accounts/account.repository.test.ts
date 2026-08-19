@@ -2,9 +2,9 @@ import { DatabaseSync } from "node:sqlite";
 
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { applyConnectionPragmas } from "./../database/db.utils.ts";
-import { createDrizzle } from "./../database/drizzle.ts";
-import { runMigrations } from "./../database/run-migrations.ts";
+import { applyConnectionPragmas } from "./../../core/database/db.utils.ts";
+import { createDrizzle } from "./../../core/database/drizzle.ts";
+import { runMigrations } from "./../../core/database/run-migrations.ts";
 import { AccountRepository } from "./account.repository.ts";
 
 let accounts: AccountRepository;
