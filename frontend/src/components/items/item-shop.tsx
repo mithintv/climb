@@ -47,7 +47,7 @@ export const ItemShop = () => {
 		// The shop is a panel with room to breathe on both sides, not a page that
 		// runs to the window edges — same shape as the client's own window.
 		<main className="mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-6xl flex-col px-6 py-6">
-			<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-card/40">
+			<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gold/25 bg-card/40 card-raised">
 				<ItemFilters
 					search={search}
 					version={version}

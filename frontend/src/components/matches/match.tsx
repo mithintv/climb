@@ -131,7 +131,7 @@ const StatCell = (props: {
  * loaded card — five team rows plus padding — so the list does not jump.
  */
 export const MatchSkeleton = () => (
-	<div className="h-[102px] animate-pulse rounded-xl border border-white/5 bg-card/40" />
+	<div className="h-[102px] animate-pulse rounded-xl border border-gold/25 bg-card/40 card-raised" />
 );
 
 interface MatchProps {
@@ -162,18 +162,15 @@ export const Match = (props: MatchProps) => {
 
 	return (
 		<div
-			className={cn(
-				"overflow-hidden rounded-xl border transition-colors",
-				// The result is carried by a tinted surface and an accent rail, but
-				// never by colour alone — the word Victory/Defeat is always present.
-				won
-					? "border-cyan-400/25 bg-cyan-500/6 hover:border-cyan-400/45"
-					: "border-rose-400/25 bg-rose-500/6 hover:border-rose-400/45",
-			)}
+			// The frame is gold like every other card and the fill is the card's own,
+			// so a list of matches reads as one surface. The result is carried by the
+			// rail down the left edge and the word Victory/Defeat, which is there
+			// whether or not colour is perceived.
+			className="overflow-hidden rounded-xl border border-gold/25 bg-card/40 card-raised transition-colors hover:border-gold/50"
 		>
 			<div className="flex items-stretch">
 				<div
-					className={cn("w-1 shrink-0", won ? "bg-cyan-400" : "bg-rose-400")}
+					className={cn("w-1 shrink-0", won ? "bg-emerald-400" : "bg-rose-400")}
 				/>
 
 				{/* One row, no wrapping: the team block is already five rows tall and
@@ -187,7 +184,7 @@ export const Match = (props: MatchProps) => {
 						<p
 							className={cn(
 								"font-bold text-sm leading-tight",
-								won ? "text-cyan-300" : "text-rose-300",
+								won ? "text-emerald-300" : "text-rose-300",
 							)}
 						>
 							{won ? "Victory" : "Defeat"}
@@ -203,7 +200,7 @@ export const Match = (props: MatchProps) => {
 							<MatchChampion
 								id={player.championId}
 								name={player.championName}
-								className="size-12 rounded-lg border border-white/10"
+								className="size-13 rounded-lg border border-white/10"
 							/>
 							<span className="absolute -right-1 -bottom-1 rounded-full bg-background px-1 font-semibold text-[9px] text-foreground tabular-nums ring-1 ring-white/15">
 								{player.champLevel}
@@ -277,7 +274,12 @@ export const Match = (props: MatchProps) => {
 					{/* Dropped first when the row runs out of width — the stats above
 					    matter more on a narrow screen than the other nine players. The
 					    narrower stat block moved this from lg to md. */}
-					<div className="ml-auto hidden shrink-0 md:block">
+					{/* The one child of the row allowed to shrink. Everything left of it is
+					    a fixed size, so when the row runs out of width this block gives up
+					    space and the names truncate — without `min-w-0` it would keep its
+					    content width, overflow, and be clipped by the card's rounded
+					    `overflow-hidden` right where the notes button starts. */}
+					<div className="ml-auto hidden min-w-0 pr-2 md:block">
 						<MatchTeams match={matchData} />
 					</div>
 				</div>
@@ -287,10 +289,7 @@ export const Match = (props: MatchProps) => {
 					onClick={clickHandler}
 					aria-expanded={showNotes}
 					aria-label={showNotes ? "Hide notes" : "Show notes"}
-					className={cn(
-						"flex w-8 shrink-0 items-center justify-center border-white/5 border-l transition-colors",
-						won ? "hover:bg-cyan-400/15" : "hover:bg-rose-400/15",
-					)}
+					className="flex w-8 shrink-0 items-center justify-center border-gold/15 border-l transition-colors hover:bg-gold/10"
 				>
 					<ChevronDown
 						className={cn(
@@ -302,7 +301,7 @@ export const Match = (props: MatchProps) => {
 			</div>
 
 			{showNotes && (
-				<div className="border-white/5 border-t bg-background/40 p-4">
+				<div className="border-gold/15 border-t bg-background/40 p-4">
 					<div className="flex flex-row text-center">
 						<div className="w-1/4">
 							<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">

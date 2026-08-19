@@ -20,7 +20,7 @@ export const MatchParticipant = (props: MatchParticipantProps) => {
 		// h-4.5 matches the role icon rows, so the three columns stay aligned.
 		<div
 			className={cn(
-				"flex h-4.5 items-center gap-1.5",
+				"flex h-4.5 min-w-0 items-center gap-1.5",
 				props.align === "right" && "flex-row-reverse",
 			)}
 		>
@@ -30,7 +30,10 @@ export const MatchParticipant = (props: MatchParticipantProps) => {
 			/>
 			<span
 				className={cn(
-					"w-18 truncate text-[10px] leading-none",
+					// Grows to the 72px it had before, but gives that width back when the
+					// row is short of space, so the name truncates instead of the list
+					// being cut off at the card's edge.
+					"min-w-0 max-w-18 flex-1 truncate text-[10px] leading-none",
 					props.align === "right" && "text-right",
 					props.isSearchedPlayer
 						? "font-semibold text-foreground"

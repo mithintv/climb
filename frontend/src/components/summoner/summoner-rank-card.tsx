@@ -37,12 +37,12 @@ export const SummonerRankCard = (props: ISummonerRankCardProps) => {
 	const rate = entry ? winRate(entry.wins, entry.losses) : null;
 
 	return (
-		<section className="rounded-xl border border-white/5 bg-card/40">
-			<h2 className="flex items-center justify-between gap-2 border-white/5 border-b px-3 py-2.5">
+		<section className="rounded-xl border border-gold/25 bg-card/40 card-raised">
+			<h2 className="flex items-center justify-between gap-2 border-gold/15 border-b px-3 py-2.5">
 				{/* The glyph names the section rather than just marking it — decorative
 				    to a screen reader, which already has the heading text. */}
 				<span className="flex items-center gap-2 font-semibold text-foreground text-sm">
-					<TrophyIcon className="size-3.5 text-cyan-400" aria-hidden="true" />
+					<TrophyIcon className="size-3.5 text-gold" aria-hidden="true" />
 					{props.queueLabel}
 				</span>
 			</h2>

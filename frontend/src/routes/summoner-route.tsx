@@ -36,14 +36,18 @@ const SummonerPage = () => {
 		);
 	}
 
+	// From lg up the page is exactly the viewport minus the nav (h-14), and the
+	// two columns scroll inside it, so the document itself never scrolls and the
+	// rail stays put while games are read. Below lg it is one column in normal
+	// flow — two stacked scroll areas on a phone would trap the inner one. The
+	// 3.5rem matches the nav, and the item shop's frame is built the same way.
 	return (
-		<div className="mx-auto max-w-6xl px-4 py-6">
+		<div className="mx-auto max-w-6xl px-4 py-6 lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col">
 			{/* Identity and rank share the rail, so nothing spans the top and the
 			    match list starts at the page's first line — the games are what the
-			    page is for, and they get its full height. One column below lg,
-			    where a 300px rail would leave the rows too narrow to read. */}
-			<div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-				<aside className="flex flex-col gap-4">
+			    page is for, and they get its full height. */}
+			<div className="grid min-h-0 grid-cols-1 items-start gap-4 lg:items-stretch lg:flex-1 lg:grid-cols-[300px_minmax(0,1fr)]">
+				<aside className="flex flex-col gap-4 lg:min-h-0 lg:h-full lg:overflow-y-auto lg:pr-1">
 					<SummonerHeader
 						// Riot's casing once the account resolves; until then, what was typed.
 						gameName={account?.gameName ?? gameName}
@@ -63,24 +67,27 @@ const SummonerPage = () => {
 					)}
 				</aside>
 
-				<main className="flex flex-col gap-2">
-					<h2 className="flex items-center gap-2 px-1 font-semibold text-foreground text-sm">
-						<HistoryIcon
-							className="size-3.5 text-cyan-400"
-							aria-hidden="true"
-						/>
+				<main className="flex flex-col gap-2 lg:h-full lg:min-h-0">
+					{/* The heading and the summary stay put; only the games scroll, so
+					    what the figures describe is still on screen while reading them. */}
+					<h2 className="flex shrink-0 items-center gap-2 px-1 font-semibold text-foreground text-sm">
+						<HistoryIcon className="size-3.5 text-gold" aria-hidden="true" />
 						Match History
 					</h2>
 
 					{account && (
-						<SummonerRecentSummary matches={matches} puuid={account.puuid} />
+						<div className="shrink-0">
+							<SummonerRecentSummary matches={matches} puuid={account.puuid} />
+						</div>
 					)}
 
-					<MatchList
-						puuid={account?.puuid ?? ""}
-						matches={matches}
-						loading={loading}
-					/>
+					<div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+						<MatchList
+							puuid={account?.puuid ?? ""}
+							matches={matches}
+							loading={loading}
+						/>
+					</div>
 				</main>
 			</div>
 		</div>

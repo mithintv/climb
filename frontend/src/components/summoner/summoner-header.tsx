@@ -9,7 +9,7 @@ interface ISummonerHeaderProps {
  * the page that must be readable in full, and the rail is only 300px wide.
  */
 export const SummonerHeader = (props: ISummonerHeaderProps) => (
-	<header className="rounded-xl border border-white/5 bg-linear-to-br from-indigo-500/15 to-card/40 px-4 py-4">
+	<header className="rounded-xl border border-gold/25 bg-linear-to-br from-teal-500/10 to-card/40 card-raised px-4 py-4">
 		<h1 className="font-bold text-foreground text-xl leading-tight tracking-tight">
 			{props.gameName}
 			<span className="ml-1 font-medium text-base text-muted-foreground">

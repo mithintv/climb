@@ -49,13 +49,13 @@ export const MatchSummonerSpells = (props: MatchSummonerSpellsProps) => {
 	return (
 		<div className="flex flex-col gap-0.5">
 			<img
-				className="size-5.5 rounded border border-white/10"
+				className="size-6 rounded border border-white/10"
 				src={SUMMONER_SPELL_ICONS[spell1.image.full]}
 				alt={spell1.name}
 				loading="lazy"
 			/>
 			<img
-				className="size-5.5 rounded border border-white/10"
+				className="size-6 rounded border border-white/10"
 				src={SUMMONER_SPELL_ICONS[spell2.image.full]}
 				alt={spell2.name}
 				loading="lazy"

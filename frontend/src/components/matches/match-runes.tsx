@@ -84,13 +84,13 @@ export const MatchRunes = (props: MatchRunesProps) => {
 				aria-label={`MatchRunes: ${keystone.name}, ${secondaryTree.name} secondary`}
 			>
 				<img
-					className="size-6 rounded-full bg-black/40"
+					className="size-6.5 rounded-full bg-black/40"
 					src={runeImage(keystone)}
 					alt=""
 					loading="lazy"
 				/>
 				<img
-					className="size-4 opacity-80"
+					className="size-4.5 opacity-80"
 					src={runeImage(secondaryTree)}
 					alt=""
 					loading="lazy"

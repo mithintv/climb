@@ -28,12 +28,12 @@ export const SummonerRecentSummary = (props: ISummonerRecentSummaryProps) => {
 	const champions = championStats(props.matches, props.puuid).slice(0, 3);
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-white/5 bg-card/40 px-4 py-3">
+		<div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-gold/25 bg-card/40 card-raised px-4 py-3">
 			<div>
 				<p
 					className={cn(
 						"font-bold text-sm tabular-nums",
-						rate !== null && rate >= 60 && "text-cyan-300",
+						rate !== null && rate >= 60 && "text-orange-300",
 						rate !== null && rate <= 40 && "text-rose-300",
 					)}
 				>
@@ -78,7 +78,7 @@ export const SummonerRecentSummary = (props: ISummonerRecentSummaryProps) => {
 										"font-semibold text-[11px] tabular-nums",
 										championRate !== null &&
 											championRate >= 60 &&
-											"text-cyan-300",
+											"text-orange-300",
 										championRate !== null &&
 											championRate <= 40 &&
 											"text-rose-300",

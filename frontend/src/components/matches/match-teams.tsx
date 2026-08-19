@@ -12,8 +12,8 @@ export const MatchTeams = (props: MatchTeamsProps) => {
 	const searchedPuuid = props.match.player.puuid;
 
 	return (
-		<div className="flex flex-row items-center gap-1.5">
-			<div className="flex flex-col">
+		<div className="flex min-w-0 flex-row items-center gap-1.5">
+			<div className="flex min-w-0 flex-1 flex-col">
 				{props.match.team100.map((player) => (
 					<MatchParticipant
 						key={player.puuid}
@@ -38,7 +38,7 @@ export const MatchTeams = (props: MatchTeamsProps) => {
 					</div>
 				))}
 			</div>
-			<div className="flex flex-col">
+			<div className="flex min-w-0 flex-1 flex-col">
 				{props.match.team200.map((player) => (
 					<MatchParticipant
 						key={player.puuid}

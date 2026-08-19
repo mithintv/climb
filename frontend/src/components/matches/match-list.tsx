@@ -21,7 +21,7 @@ export const MatchList = (props: MatchListProps) => {
 
 	if (props.matches.length === 0) {
 		return (
-			<p className="rounded-lg border border-white/5 bg-card/40 px-4 py-6 text-center text-muted-foreground text-sm">
+			<p className="rounded-lg border border-gold/25 bg-card/40 card-raised px-4 py-6 text-center text-muted-foreground text-sm">
 				No recent matches.
 			</p>
 		);

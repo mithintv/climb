@@ -33,7 +33,7 @@ export const SummonerSearch = () => {
 	return (
 		<div className="flex flex-col items-center px-4">
 			<div className="mt-36 flex w-full flex-col items-center">
-				<h1 className="bg-linear-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text font-black text-6xl text-transparent tracking-tight">
+				<h1 className="bg-linear-to-r from-teal-200 via-teal-400 to-emerald-500 bg-clip-text font-black text-6xl text-transparent tracking-tight">
 					Climb
 				</h1>
 				<p className="mt-3 text-slate-400 text-sm">
@@ -41,9 +41,9 @@ export const SummonerSearch = () => {
 				</p>
 				<form
 					onSubmit={submitHandler}
-					className="mt-8 flex w-136 max-w-full items-center rounded-full bg-white shadow-cyan-500/10 shadow-lg focus-within:ring-2 focus-within:ring-cyan-400"
+					className="mt-8 flex w-136 max-w-full items-center rounded-full bg-white shadow-teal-500/15 shadow-lg focus-within:ring-2 focus-within:ring-teal-400"
 				>
-					<span className="ml-2 shrink-0 rounded-full bg-indigo-100 px-3 py-1 font-bold text-indigo-600 text-xs">
+					<span className="ml-2 shrink-0 rounded-full bg-teal-100 px-3 py-1 font-bold text-teal-700 text-xs">
 						NA
 					</span>
 					<Input

@@ -8,7 +8,7 @@ const RootLayout = () => (
 		<nav className="flex h-14 items-center gap-8 border-white/10 border-b px-6">
 			<Link
 				to="/"
-				className="bg-linear-to-r from-cyan-400 to-indigo-400 bg-clip-text font-extrabold text-lg text-transparent tracking-[0.3em]"
+				className="bg-linear-to-r from-teal-200 to-emerald-400 bg-clip-text font-extrabold text-lg text-transparent tracking-[0.3em]"
 			>
 				Climb
 			</Link>

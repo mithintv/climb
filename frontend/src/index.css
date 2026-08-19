@@ -8,6 +8,13 @@
 @theme inline {
 	--font-heading: var(--font-sans);
 	--font-sans: "Geist Variable", sans-serif;
+	/*
+	 * The client's own gold, not a Tailwind amber: this is the colour Riot rules
+	 * and frames its ranked UI in, so it reads as the game's rather than as a
+	 * yellow we picked. It is the accent — section glyphs and card edges — while
+	 * teal stays the surface family and `--primary` the interactive colour.
+	 */
+	--color-gold: #c8aa6e;
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -83,38 +90,66 @@
 	--sidebar-ring: oklch(0.708 0 0);
 }
 
+/*
+ * Near-black surfaces carrying only a trace of teal — they read as neutral
+ * greys until something actually teal sits beside them. The hue is constant at
+ * ~180° and only lightness changes, so a card on the page is the same colour a
+ * shade lighter rather than a second tint. Saturation is kept this low on
+ * purpose: `--primary` and the accent utilities are the only real teal, and the
+ * champion, item and rune art — none of which we control — should stay the most
+ * colourful thing on screen.
+ */
 .dark {
-	--background: #12133d;
-	--foreground: #b3b4d0;
-	--card: #1b1d54;
-	--card-foreground: #b3b4d0;
-	--popover: #1b1d54;
-	--popover-foreground: #d6d7ea;
-	--primary: #06b6d4;
-	--primary-foreground: #ffffff;
-	--secondary: #26295f;
-	--secondary-foreground: #d6d7ea;
-	--muted: #26295f;
-	--muted-foreground: #8688b3;
-	--accent: #26295f;
-	--accent-foreground: #d6d7ea;
+	--background: #070808;
+	--foreground: #c6cac9;
+	--card: #101211;
+	--card-foreground: #c6cac9;
+	--popover: #101211;
+	--popover-foreground: #e2e4e3;
+	--primary: #14b8a6;
+	--primary-foreground: #070808;
+	--secondary: #1a1d1c;
+	--secondary-foreground: #e2e4e3;
+	--muted: #1a1d1c;
+	--muted-foreground: #909392;
+	--accent: #1a1d1c;
+	--accent-foreground: #e2e4e3;
 	--destructive: oklch(0.704 0.191 22.216);
 	--border: oklch(1 0 0 / 10%);
 	--input: oklch(1 0 0 / 15%);
-	--ring: #22d3ee;
-	--chart-1: #06b6d4;
-	--chart-2: #818cf8;
-	--chart-3: #e879f9;
-	--chart-4: #26295f;
-	--chart-5: #1b1d54;
-	--sidebar: #1b1d54;
-	--sidebar-foreground: #b3b4d0;
-	--sidebar-primary: #06b6d4;
-	--sidebar-primary-foreground: #ffffff;
-	--sidebar-accent: #26295f;
-	--sidebar-accent-foreground: #d6d7ea;
+	--ring: #2dd4bf;
+	--chart-1: #2dd4bf;
+	--chart-2: #14b8a6;
+	--chart-3: #0d9488;
+	--chart-4: #1a1d1c;
+	--chart-5: #101211;
+	--sidebar: #101211;
+	--sidebar-foreground: #c6cac9;
+	--sidebar-primary: #14b8a6;
+	--sidebar-primary-foreground: #070808;
+	--sidebar-accent: #1a1d1c;
+	--sidebar-accent-foreground: #e2e4e3;
 	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: #22d3ee;
+	--sidebar-ring: #2dd4bf;
+}
+
+/*
+ * The lift every card shares, as box-shadow only — no background-image, so a
+ * card that sets its own gradient (the profile header's teal wash) keeps it.
+ *
+ * Five shadows, each doing one job: a bright hairline along the top edge and a
+ * dark one along the bottom, which together read as a panel lit from above; a
+ * soft white bleed just inside the top, which is the sheen a flat fill cannot
+ * give; then a tight contact shadow and a wide diffuse one, so the card sits on
+ * the page rather than being drawn on it.
+ */
+@utility card-raised {
+	box-shadow:
+		inset 0 1px 0 oklch(1 0 0 / 7%),
+		inset 0 10px 14px -14px oklch(1 0 0 / 22%),
+		inset 0 -1px 0 oklch(0 0 0 / 45%),
+		0 1px 2px oklch(0 0 0 / 55%),
+		0 12px 24px -14px oklch(0 0 0 / 85%);
 }
 
 @layer base {
@@ -123,12 +158,41 @@
 	}
 	body {
 		@apply bg-background text-foreground antialiased;
-		background-image: radial-gradient(
-			ellipse 80% 50% at 50% -10%,
-			#26295f 0%,
-			transparent 70%
-		);
-		background-repeat: no-repeat;
+		/* Teal rising off the bottom edge and gone by the lower third, so the page
+		   a match list actually occupies is black.
+
+		   Over it, a film grain: an inline SVG of fractal noise, desaturated to
+		   grey and tiled at 200px. Generated rather than shipped as an image, so
+		   there is no request and nothing to keep in sync; `stitchTiles` makes the
+		   turbulence wrap, so the tile edges do not show as a grid. The opacity is
+		   baked into the SVG because a background layer cannot carry its own —
+		   that number is the dial if it wants to be stronger or weaker.
+
+		   Under the grain, teal hairlines on a shallow diagonal: a 1px line every
+		   14px, which gives the surface a direction the noise cannot. The angle is
+		   deliberately not 45° — a true diagonal lines up with the corners of the
+		   cards sitting on it and reads as a moiré.
+
+		   Fixed, so a long list scrolls through the light rather than dragging it
+		   down the page. */
+		background-image:
+			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.09'/%3E%3C/svg%3E"),
+			repeating-linear-gradient(
+				20deg,
+				oklch(0.7 0.08 182 / 3.5%) 0px,
+				oklch(0.7 0.08 182 / 3.5%) 1px,
+				transparent 1px,
+				transparent 14px
+			),
+			radial-gradient(ellipse 80% 24% at 50% 108%, #0c2a29 0%, transparent 70%),
+			linear-gradient(to top, #0a1211 0%, #070808 26%);
+		background-repeat: repeat, repeat, no-repeat, no-repeat;
+		background-size:
+			200px 200px,
+			auto,
+			cover,
+			cover;
+		background-attachment: fixed;
 		min-height: 100vh;
 	}
 	html {
