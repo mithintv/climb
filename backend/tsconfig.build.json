@@ -1,0 +1,7 @@
+// Build-only overrides. Two configs exist because the project checks more than
+// it emits: tsconfig.json covers all of src (so the editor and `pnpm typecheck`
+// see errors in tests), while this one drops the tests so they never reach dist.
+{
+	"extends": "./tsconfig.json",
+	"exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
