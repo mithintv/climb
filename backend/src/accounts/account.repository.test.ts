@@ -1,0 +1,79 @@
+import { DatabaseSync } from "node:sqlite";
+
+import { beforeEach, describe, expect, it } from "vitest";
+
+import { applyConnectionPragmas } from "./../database/db.utils.ts";
+import { createDrizzle } from "./../database/drizzle.ts";
+import { runMigrations } from "./../database/run-migrations.ts";
+import { AccountRepository } from "./account.repository.ts";
+
+let accounts: AccountRepository;
+let database: DatabaseSync;
+
+beforeEach(async () => {
+	database = new DatabaseSync(":memory:");
+	applyConnectionPragmas(database);
+	const db = createDrizzle(database);
+	await runMigrations(db, database);
+
+	// Constructed directly rather than through Nest's testing module: resolving
+	// it by type would need decorator metadata, which vitest's transformer does
+	// not emit. The DI wiring is proved by the app booting, not by this test.
+	accounts = new AccountRepository(db);
+});
+
+const account = (puuid: string, gameName: string, tagLine = "NA1") => ({
+	puuid,
+	gameName,
+	tagLine,
+	region: "americas",
+});
+
+describe("AccountRepository.upsert", () => {
+	it("stores Riot's casing and a lowercased lookup key", async () => {
+		const row = await accounts.upsert(
+			account("puuid-1", "Sneaky", "NA69"),
+			1000,
+		);
+
+		expect(row.gameName).toBe("Sneaky");
+		expect(row.gameNameKey).toBe("sneaky");
+		expect(row.tagLineKey).toBe("na69");
+		expect(row.riotIdCheckedAt).toBe(1000);
+	});
+
+	it("updates the existing row when an account is renamed", async () => {
+		await accounts.upsert(account("puuid-1", "OldName"), 1000);
+		await accounts.upsert(account("puuid-1", "NewName"), 2000);
+
+		expect(database.prepare("SELECT * FROM accounts").all()).toHaveLength(1);
+		expect((await accounts.findByRiotId("NewName", "NA1"))?.gameName).toBe(
+			"NewName",
+		);
+	});
+});
+
+describe("AccountRepository.findByRiotId", () => {
+	it("matches regardless of the casing the caller typed", async () => {
+		await accounts.upsert(account("puuid-1", "Sneaky", "NA69"), 1000);
+
+		expect((await accounts.findByRiotId("sNeAkY", "na69"))?.puuid).toBe(
+			"puuid-1",
+		);
+	});
+
+	it("returns the most recently checked row when a name is reused", async () => {
+		// A riot id freed by a rename can be claimed by a different puuid, so two
+		// rows legitimately carry the same name until the stale one is refreshed.
+		await accounts.upsert(account("puuid-old", "Contested"), 1000);
+		await accounts.upsert(account("puuid-new", "Contested"), 2000);
+
+		expect((await accounts.findByRiotId("Contested", "NA1"))?.puuid).toBe(
+			"puuid-new",
+		);
+	});
+
+	it("returns undefined for an unknown riot id", async () => {
+		expect(await accounts.findByRiotId("Nobody", "NA1")).toBeUndefined();
+	});
+});

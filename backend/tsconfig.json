@@ -1,14 +1,36 @@
+// Type checking for the whole of src, tests included; tsconfig.build.json
+// narrows this to what actually gets emitted.
+//
+// The backend is ESM ("type": "module") because pino-seq ships an import-only
+// export map that CommonJS cannot require at all. rewriteRelativeImportExtensions
+// is what lets imports keep the repo's "./thing.ts" style and still emit "./thing.js".
+//
+// experimentalDecorators + emitDecoratorMetadata are what Nest's DI reads to
+// resolve constructor parameters; without the metadata every provider has to be
+// annotated with an explicit @Inject token.
 {
 	"compilerOptions": {
-		"target": "esnext",
+		"target": "es2023",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
-		"allowImportingTsExtensions": true,
-		"erasableSyntaxOnly": true,
-		"verbatimModuleSyntax": true,
-		"noEmit": true,
+		"lib": ["es2023"],
+		"outDir": "./dist",
+		"declaration": false,
+		"removeComments": false,
+		"sourceMap": true,
+		"incremental": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
 		"strict": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"strictPropertyInitialization": false,
+		"forceConsistentCasingInFileNames": true,
+		"allowImportingTsExtensions": true,
+		"rewriteRelativeImportExtensions": true,
+		"verbatimModuleSyntax": false,
+		"rootDir": "./src",
+		"tsBuildInfoFile": "./dist/.tsbuildinfo"
 	},
-	"include": ["app.ts", "logging", "controllers", "data", "routes"]
+	"include": ["src"],
+	"exclude": ["node_modules", "dist"]
 }

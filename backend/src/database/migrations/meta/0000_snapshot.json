@@ -1,0 +1,121 @@
+{
+	"version": "6",
+	"dialect": "sqlite",
+	"id": "3de4c09b-5ebc-408a-b76d-8f7757608ea3",
+	"prevId": "00000000-0000-0000-0000-000000000000",
+	"tables": {
+		"accounts": {
+			"name": "accounts",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "integer",
+					"primaryKey": true,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"puuid": {
+					"name": "puuid",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"game_name": {
+					"name": "game_name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"tag_line": {
+					"name": "tag_line",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"game_name_key": {
+					"name": "game_name_key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"tag_line_key": {
+					"name": "tag_line_key",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"region": {
+					"name": "region",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"riot_id_checked_at": {
+					"name": "riot_id_checked_at",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"date_created": {
+					"name": "date_created",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				},
+				"date_updated": {
+					"name": "date_updated",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"autoincrement": false
+				}
+			},
+			"indexes": {
+				"accounts_puuid_unique": {
+					"name": "accounts_puuid_unique",
+					"columns": ["puuid"],
+					"isUnique": true
+				},
+				"accounts_by_riot_id": {
+					"name": "accounts_by_riot_id",
+					"columns": [
+						"game_name_key",
+						"tag_line_key",
+						"\"riot_id_checked_at\" DESC"
+					],
+					"isUnique": false
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {}
+		}
+	},
+	"views": {},
+	"enums": {},
+	"_meta": {
+		"schemas": {},
+		"tables": {},
+		"columns": {}
+	},
+	"internal": {
+		"indexes": {
+			"accounts_by_riot_id": {
+				"columns": {
+					"\"riot_id_checked_at\" DESC": {
+						"isExpression": true
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,20 +1,56 @@
 # Climb
 
-A League of Legends match-tracking app with a React front end and an Express/MongoDB API.
+A League of Legends match-tracking app with a React front end and a NestJS API.
 
 ## Structure
 
 This is a pnpm workspace with two packages:
 
-- `backend/` — Express server (port 3080) backed by SQLite
+- `backend/` — NestJS server (port 3080) backed by SQLite
 - `frontend/` — React app (Vite + Tailwind, port 5173)
+
+The backend is laid out by feature, as Nest expects. `src/accounts/`, `src/matches/` and
+`src/riot/` each hold one module, and a module owns its controller (request handling), its service
+(policy) and its repository (SQL). Only `src/database/` touches the database handle directly;
+everything else injects a repository.
 
 ## Prerequisites
 
 - Node.js 24+ (the backend uses the built-in `node:sqlite` module) and [pnpm](https://pnpm.io/)
 - A Riot Games API key for match/summoner lookups
 
-The database is a SQLite file at `backend/climb.db`, created automatically on first run.
+The database is a SQLite file at `backend/climb.db`, created and migrated on first run. It holds
+nothing that cannot be re-fetched, so deleting it is always safe.
+
+Migrations are generated from the schema, never hand-written:
+
+```sh
+pnpm --filter backend db:generate   # schema.ts -> src/database/migrations/*.sql
+```
+
+`drizzle-kit` diffs `src/database/schema.ts` against the snapshot in `migrations/meta/` and writes
+the SQL; the app applies anything outstanding at boot and records it in Drizzle's own
+`__drizzle_migrations` table. Edit the schema, run the command, commit both. The build copies the
+folder into `dist/` because tsc emits no `.sql`.
+
+Queries go through **Drizzle**, over the builtin `node:sqlite` driver rather than a native one.
+Drizzle ships no `node:sqlite` driver, so `src/database/drizzle.ts` wires its `sqlite-proxy`
+dialect to a `DatabaseSync` handle — the proxy is just "give me a function that runs SQL", which is
+what `DatabaseSync` is. Four things there are not obvious:
+
+- **Row types come from `src/database/schema.ts`**, via `$inferSelect` — the same file the
+  migrations are generated from, so there is one source of truth and a test that fails if the
+  schema declares a column the migrations never created.
+- **`drizzle-kit` brings esbuild in**, which ships install scripts. It works anyway because
+  `pnpm-workspace.yaml` denies that script rather than blocking on it — esbuild ships prebuilt
+  binaries, so nothing needs to run at install time (see AGENTS.md).
+- **Rows must be returned positionally**, not as objects — `statement.setReturnArrays(true)`, which
+  Node 24 supports natively. On a `get` miss the driver passes `undefined` through rather than an
+  empty array, because Drizzle decides "no result" by truthiness and `[]` is truthy.
+- **Transactions are serialised by a lock.** The driver is async over a synchronous,
+  single-connection database, so without it a second `BEGIN` lands inside the first transaction and
+  SQLite fails with "cannot start a transaction within a transaction". There is a test that fails
+  when the lock is removed.
 
 ## Running locally
 
@@ -27,17 +63,54 @@ pnpm install
 Then start both apps:
 
 ```sh
-pnpm start
+pnpm dev
 ```
 
 Or start them individually:
 
 ```sh
-pnpm start:backend    # http://localhost:3080
-pnpm start:frontend   # http://localhost:5173
+pnpm dev:backend    # http://localhost:3080
+pnpm dev:frontend   # http://localhost:5173
 ```
 
 The frontend expects the backend at http://localhost:3080.
+
+## Backend build
+
+The backend compiles with plain `tsc`, not the Nest CLI. The CLI calls TypeScript's programmatic
+compiler API, which 7.0 does not ship (it is expected back in 7.1), and nothing at runtime needs
+it — `@nestjs/core` boots whatever JS `tsc` emits. What that costs is `nest g resource`
+scaffolding. If that starts to hurt, pin the backend to `typescript@^6` and reinstate
+`@nestjs/cli`; the pin is per-package, so the frontend can stay on 7.
+
+```sh
+pnpm --filter backend build      # tsc -p tsconfig.build.json -> dist/
+pnpm --filter backend start      # node dist/main.js
+pnpm --filter backend test       # vitest
+pnpm --filter backend typecheck
+```
+
+`pnpm --filter backend dev` runs `tsc -w` and `node --watch dist/main.js` in parallel — the Nest
+CLI's watch mode without the CLI.
+
+Four settings are load-bearing and not obvious from the files themselves:
+
+- **The backend is ESM.** `pino-seq` publishes an `import`-only export map, so a CommonJS build
+  cannot `require()` it at all. `rewriteRelativeImportExtensions` is what lets imports keep the
+  repo's `./thing.ts` style while emitting `./thing.js`.
+- **Two tsconfigs**, because the project checks more than it emits. `tsconfig.json` covers all of
+  `src` so the editor and `pnpm typecheck` see errors in tests; `tsconfig.build.json` excludes
+  `**/*.test.ts` so they never reach `dist/`.
+- **`emitDecoratorMetadata`** is what Nest's DI reads to resolve constructor parameters. Verified
+  working on TypeScript 7.0.2.
+- **Biome needs two opt-ins.** `unsafeParameterDecoratorsEnabled` to parse `@Param`/`@Inject` at
+  all — an unparsed file is silently neither linted nor formatted — and `useImportType` is off for
+  `backend/src`, because it rewrites an injectable's import to `import type` and erases the very
+  class the DI container needs at runtime.
+- **Tests construct their subjects with `new`,** not `Test.createTestingModule`. Resolving by type
+  needs `design:paramtypes`, which vitest's esbuild cannot emit; the alternative was a swc
+  transformer, and that pulls a package with a native postinstall script into the tree. The DI
+  wiring is covered by the app booting instead.
 
 ## Riot static assets
 

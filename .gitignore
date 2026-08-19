@@ -6,9 +6,15 @@
 **/.claude/
 **/tickets
 
+# IDE
+**/.vscode
+
 # dependencies
 node_modules/
 *.db
+# WAL mode writes these alongside the database file.
+*.db-wal
+*.db-shm
 /backend/assets
 /frontend/assets
 /.pnp

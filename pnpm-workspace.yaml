@@ -2,5 +2,8 @@ packages:
   - backend
   - frontend
 allowBuilds:
+  # Denied, not allowed: these ship prebuilt binaries and work without running
+  # their install scripts, so nothing needs to execute at install time.
+  esbuild: false
   core-js: false
   core-js-pure: false
