@@ -1,11 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 
-import { DRIZZLE } from "./../../core/database/database.constant.ts";
-import type { Drizzle } from "./../../core/database/drizzle.ts";
-import { accountMatchSync } from "./../../core/database/models/account-match-sync.model.ts";
-import { accountMatches } from "./../../core/database/models/account-matches.model.ts";
-import { splitMatchId } from "./../../lib/split-match-id.ts";
+import { DRIZZLE } from "./../../../core/database/database.constant.ts";
+import type { Drizzle } from "./../../../core/database/drizzle.ts";
+import { accountMatchSync } from "./../../../core/database/models/account-match-sync.model.ts";
+import { accountMatches } from "./../../../core/database/models/account-matches.model.ts";
+import { splitMatchId } from "./../../../lib/split-match-id.ts";
 
 /** Which window of an account's ids to read, newest first. */
 export interface IMatchIdWindow {

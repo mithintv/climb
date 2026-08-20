@@ -1,10 +1,10 @@
 import { Test } from "@nestjs/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createTestDatabase } from "./../../core/database/create-test-database.ts";
-import { DRIZZLE } from "./../../core/database/database.constant.ts";
-import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
-import { AccountRepository } from "./../accounts/account.repository.ts";
+import { createTestDatabase } from "./../../../core/database/create-test-database.ts";
+import { DRIZZLE } from "./../../../core/database/database.constant.ts";
+import { RiotApiService } from "./../../../integrations/riot/riot-api.service.ts";
+import { AccountRepository } from "./../account.repository.ts";
 import { AccountMatchRepository } from "./account-match.repository.ts";
 import { AccountMatchService } from "./account-match.service.ts";
 import { ACCOUNT_MATCH_HEAD_TTL_MS } from "./account-match-sync.constant.ts";

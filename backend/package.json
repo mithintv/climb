@@ -5,7 +5,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json && pnpm run migrations:copy",
 		"migrations:copy": "node --eval \"require('node:fs').cpSync('src/core/database/migrations', 'dist/core/database/migrations', { recursive: true })\"",
-		"dev": "pnpm run migrations:copy && pnpm run --parallel \"/^dev:/\"",
+		"dev": "pnpm run migrations:copy && pnpm run --parallel --reporter-hide-prefix \"/^dev:/\"",
 		"dev:build": "tsc -w -p tsconfig.build.json --preserveWatchOutput",
 		"dev:serve": "node --watch dist/main.js",
 		"start": "node dist/main.js",

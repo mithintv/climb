@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 
-import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
-import { AccountRepository } from "./../accounts/account.repository.ts";
+import { RiotApiService } from "./../../../integrations/riot/riot-api.service.ts";
+import { AccountRepository } from "./../account.repository.ts";
 import { AccountMatchRepository } from "./account-match.repository.ts";
 import {
 	mergeBackfillPage,
