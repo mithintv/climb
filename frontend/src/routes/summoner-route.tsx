@@ -20,10 +20,17 @@ import { rootRoute } from "./root-route";
 const SummonerPage = () => {
 	const { riotId } = summonerRoute.useParams();
 	const { gameName, tagLine } = parseRiotIdParam(riotId);
-	const { account, ranks, matches, loading, error } = useSummoner(
-		gameName,
-		tagLine,
-	);
+	const {
+		account,
+		ranks,
+		matches,
+		loading,
+		error,
+		loadingMore,
+		retrying,
+		hasMore,
+		loadMore,
+	} = useSummoner(gameName, tagLine);
 
 	if (error) {
 		return (
@@ -86,6 +93,10 @@ const SummonerPage = () => {
 							puuid={account?.puuid ?? ""}
 							matches={matches}
 							loading={loading}
+							loadingMore={loadingMore}
+							retrying={retrying}
+							hasMore={hasMore}
+							onLoadMore={loadMore}
 						/>
 					</div>
 				</main>
