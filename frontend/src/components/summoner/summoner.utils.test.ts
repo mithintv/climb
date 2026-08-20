@@ -9,6 +9,7 @@ import {
 	entryForQueue,
 	formatRank,
 	parseRiotIdParam,
+	parseTypedRiotId,
 	primaryEntry,
 	recentRecord,
 	toRiotIdParam,
@@ -29,9 +30,11 @@ const match = (
 	puuid: string,
 	championName: string,
 	over: Partial<IMatchParticipant> = {},
+	gameDuration = 1800,
 ): IMatch =>
 	({
 		info: {
+			gameDuration,
 			participants: [
 				{
 					puuid,
@@ -40,6 +43,10 @@ const match = (
 					kills: 5,
 					deaths: 2,
 					assists: 7,
+					totalMinionsKilled: 100,
+					neutralMinionsKilled: 20,
+					visionScore: 30,
+					challenges: { goldPerMinute: 400 },
 					...over,
 				} as IMatchParticipant,
 			],
@@ -176,5 +183,69 @@ describe("recentRecord", () => {
 		const record = recentRecord([match("other", "Ashe")], "me");
 		expect(record.games).toBe(0);
 		expect(record.deaths).toBe(0);
+		expect(record.csPerMinute).toBe(0);
+		expect(record.goldPerMinute).toBe(0);
+	});
+
+	it("averages the rates per game, not over the total time played", () => {
+		// 120 cs in 30 min is 4.0/min; 120 cs in 15 min is 8.0/min. Averaged per
+		// game that is 6.0 — weighting by time would give 5.33 and let the long
+		// game speak for twice as much of the figure.
+		const record = recentRecord(
+			[match("me", "Ashe", {}, 1800), match("me", "Ashe", {}, 900)],
+			"me",
+		);
+		expect(record.csPerMinute).toBeCloseTo(6, 5);
+	});
+
+	it("averages vision as a per-game total rather than a rate", () => {
+		const record = recentRecord(
+			[
+				match("me", "Ashe", { visionScore: 20 }),
+				match("me", "Ashe", { visionScore: 40 }),
+			],
+			"me",
+		);
+		expect(record.visionScore).toBe(30);
+	});
+
+	it("counts a payload with no challenges block as zero gold rate, not NaN", () => {
+		const record = recentRecord(
+			[
+				match("me", "Ashe", {
+					challenges: undefined as unknown as IMatchParticipant["challenges"],
+				}),
+				match("me", "Ashe", { challenges: { goldPerMinute: 400 } }),
+			],
+			"me",
+		);
+		expect(record.goldPerMinute).toBe(200);
+	});
+
+	it("ignores a remake reporting no duration instead of dividing by zero", () => {
+		const record = recentRecord([match("me", "Ashe", {}, 0)], "me");
+		expect(record.csPerMinute).toBe(0);
+	});
+});
+
+describe("parseTypedRiotId", () => {
+	it("splits a typed riot id on the hash", () => {
+		expect(parseTypedRiotId("Sneaky#NA69", "NA1")).toEqual({
+			gameName: "Sneaky",
+			tagLine: "NA69",
+		});
+	});
+
+	it("defaults the tag when the box was left without one", () => {
+		expect(parseTypedRiotId("Sneaky", "NA1")?.tagLine).toBe("NA1");
+	});
+
+	it("defaults the tag when the hash was typed but nothing after it", () => {
+		expect(parseTypedRiotId("Sneaky#", "NA1")?.tagLine).toBe("NA1");
+	});
+
+	it("is null for input that names no account, so the caller does not navigate", () => {
+		expect(parseTypedRiotId("   ", "NA1")).toBeNull();
+		expect(parseTypedRiotId("#NA1", "NA1")).toBeNull();
 	});
 });

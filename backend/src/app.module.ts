@@ -3,7 +3,6 @@ import { LoggerModule } from "nestjs-pino";
 
 import { DatabaseModule } from "./core/database/database.module.ts";
 import { logger } from "./core/logging/logger.ts";
-import { AccountMatchModule } from "./features/account-matches/account-match.module.ts";
 import { AccountModule } from "./features/accounts/account.module.ts";
 import { MatchModule } from "./features/matches/match.module.ts";
 
@@ -22,7 +21,6 @@ import { MatchModule } from "./features/matches/match.module.ts";
 		}),
 		DatabaseModule,
 		AccountModule,
-		AccountMatchModule,
 		MatchModule,
 	],
 })

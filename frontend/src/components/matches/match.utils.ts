@@ -39,3 +39,16 @@ export const kdaRatio = (kills: number, deaths: number, assists: number) =>
 /** `14231` → `"14.2k"`, so gold stays one glanceable width. */
 export const formatGold = (gold: number) =>
 	gold >= 1000 ? `${(gold / 1000).toFixed(1)}k` : `${gold}`;
+
+/**
+ * `"18 AUG"` — the calendar date, beside the relative one rather than instead
+ * of it. "3d ago" is what a reader scans by; the date is what they need the
+ * moment they want to line a game up against something outside the app.
+ *
+ * No year: the list is in reverse chronological order, so a game old enough for
+ * the year to matter is far past where anyone is still reading dates.
+ */
+export const formatMatchDate = (timestamp: number) =>
+	new Date(timestamp)
+		.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+		.toUpperCase();

@@ -1,94 +1,77 @@
 import runesLibrary from "@assets/runesReforged.json";
 
+import { cn } from "@/lib/utils";
+import type { IPerkStyle } from "@/types/riot/i-perk-style.type";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/ui/hover-card";
 
-import type { IPerkStyle } from "../../types/riot/i-perk-style.type";
 import { MATCH_RUNE_STAT_SHARDS } from "./constants/match-rune-stat-shard.constant";
-import { runeIconUrl } from "./match-runes.utils";
+import {
+	type IRune,
+	type IRuneTreeLibraryEntry,
+	resolveMatchRunes,
+	runeIconUrl,
+} from "./match-runes.utils";
+import type { MatchSlotSize } from "./types/match-slot-size.type";
 
-interface Rune {
-	id: number;
-	/** Data Dragon key, e.g. "DarkHarvest"; the committed icon is named after it. */
-	key: string;
-	name: string;
-}
+/** Slot geometry per size step, matching the spells beside them exactly. */
+const RUNE_SLOT_CLASS: Record<MatchSlotSize, string> = {
+	card: "size-[25px]",
+	scoreboard: "size-[15px]",
+};
 
-interface RuneTree {
-	id: number;
-	key: string;
-	name: string;
-}
-
-interface MatchRunesProps {
+interface IMatchRunesProps {
 	runes: IPerkStyle[];
 	primaryId: number;
 	secondaryId: number;
 	/** The three stat shard ids, in offense/flex/defense order. */
 	statPerks: { offense: number; flex: number; defense: number };
+	size: MatchSlotSize;
 }
 
-export const MatchRunes = (props: MatchRunesProps) => {
-	// return rune object from static assets given the ID of a given rune tree
-	const fetchRuneObject = (runeTreeId: number) => {
-		return runesLibrary.find((runeTree) => runeTree.id === runeTreeId);
-	};
-
-	// return specific rune slot object from static assets given the string 'primary' or 'secondary' and rune slot number
-	const fetchRuneSlot = (tree: "primary" | "secondary", runeSlot: number) => {
-		const runeTree = fetchRuneObject(
-			tree === "primary" ? props.primaryId : props.secondaryId,
+/**
+ * The keystone over the secondary tree, as the right half of the loadout
+ * cluster, with the full page on hover.
+ *
+ * Circles, where the summoner spells beside them are squares: the two are the
+ * same size and sit in the same 2×2 block, so shape is the only thing telling a
+ * reader which is which at 22px.
+ */
+export const MatchRunes = (props: IMatchRunesProps) => {
+	const { keystone, primaryTree, secondaryTree, primaryRunes, secondaryRunes } =
+		resolveMatchRunes(
+			props.runes,
+			props.primaryId,
+			props.secondaryId,
+			runesLibrary as IRuneTreeLibraryEntry[],
 		);
-		const j = tree === "primary" ? 0 : 1;
-		if (!runeTree) return;
-		for (let i = 0; i < 4; i++) {
-			const rune = runeTree.slots[i].runes.find(
-				(slot) => slot.id === props.runes[j].selections[runeSlot - 1].perk,
-			);
-			if (rune) return rune;
-		}
-	};
 
-	// return array of rune slot objects from static assets given the string 'primary' or 'secondary'
-	const createRuneArray = (tree: "primary" | "secondary") => {
-		const slotNumber = tree === "primary" ? 4 : 2;
-		const array: Rune[] = [];
-		for (let i = 1; i < slotNumber + 1; i++) {
-			const rune = fetchRuneSlot(tree, i);
-			if (rune) array.push(rune);
-		}
-		return array;
-	};
-
-	const primaryRunes = createRuneArray("primary");
-	const secondaryRunes = createRuneArray("secondary");
-	const primaryTree = fetchRuneObject(props.primaryId) as RuneTree | undefined;
-	const secondaryTree = fetchRuneObject(props.secondaryId) as
-		| RuneTree
-		| undefined;
-
-	// The keystone is the first pick of the primary tree, and the only rune the
-	// collapsed card shows; everything else lives in the hover panel.
-	const keystone = primaryRunes[0];
+	// Arena and some rotating modes return a perks block with no picks in it.
+	// The card still renders — it just has no rune column.
 	if (!keystone || !secondaryTree) return null;
+
+	const slot = RUNE_SLOT_CLASS[props.size];
 
 	return (
 		<HoverCard openDelay={120} closeDelay={80}>
 			<HoverCardTrigger
 				// A button so the panel is reachable by keyboard, not hover only.
 				type="button"
-				// Stacked, not side by side: one icon of width instead of two, and
-				// the keystone over its secondary tree reads as one build.
-				className="flex cursor-default flex-col items-center gap-0.5 rounded outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-				aria-label={`MatchRunes: ${keystone.name}, ${secondaryTree.name} secondary`}
+				className="flex cursor-default flex-col gap-1 rounded outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+				aria-label={`Runes: ${keystone.name}, ${secondaryTree.name} secondary`}
 			>
+				{/* The keystone is the one rune worth naming at this size, so it gets
+				    the gold frame the page reserves for a game's headline pick. */}
 				<img
-					className="size-6.5 rounded-full bg-black/40"
+					className={cn(
+						slot,
+						"rounded-full border border-quest-edge bg-quest-slot",
+					)}
 					src={runeIconUrl(keystone.key)}
 					alt=""
 					loading="lazy"
 				/>
 				<img
-					className="size-4.5 opacity-80"
+					className={cn(slot, "rounded-full border border-control bg-slot")}
 					src={runeIconUrl(secondaryTree.key)}
 					alt=""
 					loading="lazy"
@@ -96,37 +79,40 @@ export const MatchRunes = (props: MatchRunesProps) => {
 			</HoverCardTrigger>
 
 			<HoverCardContent align="start" className="w-56">
-				<RuneTreeDetail
+				<MatchRuneTreeDetail
 					treeName={primaryTree?.name ?? "Primary"}
 					runes={primaryRunes}
 					highlightFirst
 				/>
-				<div className="my-2 border-white/10 border-t" />
-				<RuneTreeDetail treeName={secondaryTree.name} runes={secondaryRunes} />
-				<div className="my-2 border-white/10 border-t" />
-				<StatShardDetail statPerks={props.statPerks} />
+				<div className="my-2 border-edge border-t" />
+				<MatchRuneTreeDetail
+					treeName={secondaryTree.name}
+					runes={secondaryRunes}
+				/>
+				<div className="my-2 border-edge border-t" />
+				<MatchStatShardDetail statPerks={props.statPerks} />
 			</HoverCardContent>
 		</HoverCard>
 	);
 };
 
-interface RuneTreeDetailProps {
+interface IMatchRuneTreeDetailProps {
 	treeName: string;
-	runes: Rune[];
+	runes: IRune[];
 	/** The primary tree's first rune is the keystone, so it is named larger. */
 	highlightFirst?: boolean;
 }
 
-const RuneTreeDetail = (props: RuneTreeDetailProps) => (
+const MatchRuneTreeDetail = (props: IMatchRuneTreeDetailProps) => (
 	<div>
-		<p className="mb-1.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
-			{props.treeName}
+		<p className="mb-1.5 font-mono text-[9px] text-ink-label tracking-[.18em]">
+			{props.treeName.toUpperCase()}
 		</p>
 		<ul className="flex flex-col gap-1.5">
 			{props.runes.map((rune, index) => (
 				<li key={rune.id} className="flex items-center gap-2">
 					<img
-						className="size-5 shrink-0 rounded-full bg-black/40"
+						className="size-5 shrink-0 rounded-full bg-slot"
 						src={runeIconUrl(rune.key)}
 						alt=""
 						loading="lazy"
@@ -134,8 +120,8 @@ const RuneTreeDetail = (props: RuneTreeDetailProps) => (
 					<span
 						className={
 							props.highlightFirst && index === 0
-								? "font-semibold text-foreground text-xs"
-								: "text-muted-foreground text-xs"
+								? "font-semibold text-[12px] text-ink"
+								: "text-[12px] text-ink-tertiary"
 						}
 					>
 						{rune.name}
@@ -146,7 +132,7 @@ const RuneTreeDetail = (props: RuneTreeDetailProps) => (
 	</div>
 );
 
-interface StatShardDetailProps {
+interface IMatchStatShardDetailProps {
 	statPerks: { offense: number; flex: number; defense: number };
 }
 
@@ -154,7 +140,7 @@ interface StatShardDetailProps {
  * The three shards under the trees. An id of 0 means the row was left empty, so
  * it is skipped rather than rendered as a missing icon.
  */
-const StatShardDetail = (props: StatShardDetailProps) => {
+const MatchStatShardDetail = (props: IMatchStatShardDetailProps) => {
 	const chosen = [
 		props.statPerks.offense,
 		props.statPerks.flex,
@@ -167,20 +153,20 @@ const StatShardDetail = (props: StatShardDetailProps) => {
 
 	return (
 		<div>
-			<p className="mb-1.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
-				Shards
+			<p className="mb-1.5 font-mono text-[9px] text-ink-label tracking-[.18em]">
+				SHARDS
 			</p>
 			<ul className="flex flex-col gap-1.5">
 				{chosen.map((shard) => (
 					<li key={shard.icon} className="flex items-center gap-2">
 						<img
-							className="size-5 shrink-0 rounded-full bg-black/40"
+							className="size-5 shrink-0 rounded-full bg-slot"
 							src={shard.icon}
 							alt=""
 							loading="lazy"
 						/>
-						<span className="text-muted-foreground text-xs">
-							<span className="font-semibold text-foreground tabular-nums">
+						<span className="text-[12px] text-ink-tertiary">
+							<span className="font-mono font-semibold text-ink">
 								{shard.value}
 							</span>{" "}
 							{shard.name}
