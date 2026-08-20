@@ -11,6 +11,11 @@ import type { IRiotMatchDto } from "./types/i-riot-match-dto.type.ts";
  * Not a cache: nothing here expires, is evicted or is revalidated. A completed
  * match never changes, so the first fetch is the last one and the saved row is
  * the record rather than a copy of one.
+ *
+ * The two reads are deliberately separate. `findMatchBody` is what a page read
+ * uses and never calls Riot; `getMatchBody` fetches what is missing and is for
+ * a sync, which is the one thing allowed to. Folding them back into one call
+ * would put a Riot fetch behind an ordinary scroll again, one per card.
  */
 @Injectable()
 export class MatchService {
@@ -24,8 +29,23 @@ export class MatchService {
 	}
 
 	/**
+	 * The saved match payload, or undefined when the match has not been synced.
+	 *
+	 * A database read and nothing else. Undefined is a real answer here rather
+	 * than a miss to repair — it means nothing has synced this match yet, and the
+	 * caller says so instead of quietly spending a Riot call to hide it.
+	 */
+	async findMatchBody(matchId: string): Promise<string | undefined> {
+		const saved = await this.matches.findPayload(matchId);
+		if (!saved) return undefined;
+		return decodeMatchPayload(saved.payload, saved.payloadEncoding);
+	}
+
+	/**
 	 * The match payload, read from the database when it has been saved and
 	 * fetched from Riot — and saved — when it has not.
+	 *
+	 * For a sync. A page read wants `findMatchBody`, which cannot call Riot.
 	 *
 	 * `source` says which happened. It is reported rather than inferred because
 	 * the body is identical either way: the same characters Riot sent are

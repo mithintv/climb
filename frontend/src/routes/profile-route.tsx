@@ -25,6 +25,10 @@ const ProfilePage = () => {
 		retrying,
 		hasMore,
 		loadMore,
+		sync,
+		syncing,
+		syncError,
+		syncStatus,
 	} = useSummoner(gameName, tagLine);
 
 	if (error) {
@@ -84,6 +88,10 @@ const ProfilePage = () => {
 					retrying={retrying}
 					hasMore={hasMore}
 					onLoadMore={loadMore}
+					onSync={sync}
+					syncing={syncing}
+					syncError={syncError}
+					syncStatus={syncStatus}
 				/>
 			</div>
 		</div>

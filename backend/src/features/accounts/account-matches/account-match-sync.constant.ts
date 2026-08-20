@@ -1,15 +1,4 @@
 /**
- * How long the newest end of a cached id list is trusted before Riot's list is
- * read again.
- *
- * Short because this is the one part of the index that goes stale: a completed
- * match never changes, but a game finishing adds an id at the head. A minute is
- * the resolution at which a just-finished game shows up, and it still collapses
- * the several id-list calls a page refresh used to make into one.
- */
-export const ACCOUNT_MATCH_HEAD_TTL_MS = 60 * 1000;
-
-/**
  * How many ids a sync fetches at once. Riot caps `count` at 100; 20 keeps a
  * head refresh that has to page cheap, since the common case rejoins the cached
  * set inside the first page.
@@ -27,3 +16,22 @@ export const ACCOUNT_MATCH_PAGE_SIZE = 20;
  * shift was larger than this and the page is refused.
  */
 export const ACCOUNT_MATCH_BACKFILL_OVERLAP = 5;
+
+/**
+ * How many payloads one background chunk fetches.
+ *
+ * The expensive half of the work by a wide margin: ids come twenty to a call,
+ * payloads one to a call. This figure and the tick below are the rate limit —
+ * five every fifteen seconds is 40 calls a two-minute window, comfortably inside
+ * a development key's 100 and leaving room for the requests a reader makes.
+ */
+export const ACCOUNT_MATCH_INGEST_CHUNK = 5;
+
+/**
+ * How often the background worker does a chunk of work.
+ *
+ * Paced rather than fast: nobody is waiting on it. The reader pressed update,
+ * got their newest games from the head sync, and the deep history fills in
+ * behind them.
+ */
+export const ACCOUNT_MATCH_WORKER_TICK_MS = 15 * 1000;

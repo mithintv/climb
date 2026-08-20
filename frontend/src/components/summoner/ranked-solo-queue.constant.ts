@@ -1,5 +1,6 @@
 /**
- * Riot's queue id for ranked solo/duo, and the only queue the profile shows.
+ * Riot's queue id for ranked solo/duo, sent as the `queue` parameter on every
+ * match request. It is the only queue the profile asks for.
  *
  * The whole page is about climbing solo queue, so a normal game or an ARAM in
  * the list is noise against every figure around it — a KDA average and a win
