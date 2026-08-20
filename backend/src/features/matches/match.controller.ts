@@ -1,55 +1,22 @@
-import {
-	BadRequestException,
-	Controller,
-	Get,
-	Header,
-	Logger,
-	Param,
-	Query,
-} from "@nestjs/common";
+import { Controller, Get, Header, Logger, Param } from "@nestjs/common";
 
-import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import { MatchService } from "./match.service.ts";
 
 @Controller("matches")
 export class MatchController {
 	private readonly logger = new Logger(MatchController.name);
 	private readonly matches: MatchService;
-	private readonly riot: RiotApiService;
 
-	constructor(matches: MatchService, riot: RiotApiService) {
+	constructor(matches: MatchService) {
 		this.matches = matches;
-		this.riot = riot;
-	}
-
-	/**
-	 * `GET /matches?puuid=…&start=&count=` — a page of a player's match ids,
-	 * newest first. The puuid is a filter on the collection rather than a path
-	 * segment, since the ids belong to matches, not to the player.
-	 */
-	@Get()
-	async getMatchIds(
-		@Query("puuid") puuid?: string,
-		@Query("start") start?: string,
-		@Query("count") count?: string,
-	) {
-		if (!puuid) {
-			throw new BadRequestException("A puuid query parameter is required");
-		}
-
-		const startIndex = Number(start) || 0;
-		const pageSize = Number(count) || 5;
-
-		const matchIds = await this.riot.fetchMatchIds(puuid, startIndex, pageSize);
-		this.logger.debug(
-			`Fetched ${matchIds.length} match ids (start=${startIndex}, count=${pageSize})`,
-		);
-		return matchIds;
 	}
 
 	/**
 	 * `GET /matches/:matchId` — one full match payload. The first request saves
 	 * it; every later one reads it back out of the database.
+	 *
+	 * A player's list of match ids is not here: it belongs to an account rather
+	 * than to the match collection, and is served by `GET /accounts/:puuid/matches`.
 	 *
 	 * The body is passed through as the characters Riot sent rather than
 	 * re-serialised, so the header has to be set by hand: Nest sends a string

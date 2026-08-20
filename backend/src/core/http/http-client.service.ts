@@ -36,6 +36,28 @@ const describeBody = (body: unknown) => {
 };
 
 /**
+ * Reads a `Retry-After` header as whole seconds, or null if there is nothing
+ * usable in it.
+ *
+ * The header is allowed to be either a delay in seconds or an HTTP date. Only
+ * the numeric form is honoured: Riot sends that one, and a date would have to be
+ * trusted against a clock this process does not share. Anything else — absent,
+ * a date, a negative — comes back null, which the caller reads as "back off on
+ * your own schedule" rather than "come back immediately".
+ */
+export const parseRetryAfter = (header: unknown) => {
+	if (typeof header !== "string" || header.trim() === "") return null;
+
+	// The emptiness check above is not redundant: `Number("")` is 0, so a header
+	// present but blank would otherwise read as "retry immediately" — the one
+	// answer guaranteed to earn a second rate limit.
+	const seconds = Number(header);
+	if (!Number.isFinite(seconds) || seconds < 0) return null;
+
+	return Math.ceil(seconds);
+};
+
+/**
  * The one client every outbound HTTP call goes through.
  *
  * Its job is to make an upstream failure look like a normal Nest error at the
@@ -68,7 +90,23 @@ export class HttpClientService {
 
 				// The upstream body is deliberately not passed on: it can carry API
 				// keys' rate limit headers and the provider's own error text.
-				throw new HttpException("Upstream request failed", status);
+				//
+				// `Retry-After` is the one exception, and only on a 429. A caller that
+				// is told to back off but not for how long can only guess, and a guess
+				// that is short becomes a second rate limit; unlike the
+				// `X-…-Rate-Limit` family it says nothing about the key's tier, only
+				// when this caller may come back.
+				const retryAfter =
+					status === 429
+						? parseRetryAfter(error.response?.headers["retry-after"])
+						: null;
+
+				throw new HttpException(
+					retryAfter === null
+						? "Upstream request failed"
+						: { message: "Upstream request failed", retryAfter },
+					status,
+				);
 			},
 		);
 	}

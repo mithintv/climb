@@ -1,6 +1,7 @@
 import type { matchParticipants } from "./../../core/database/models/match-participants.model.ts";
 import type { matches } from "./../../core/database/models/matches.model.ts";
 import type { PerkKind } from "./../../core/database/types/perk-kind.type.ts";
+import { splitMatchId } from "./../../lib/split-match-id.ts";
 import type { IRiotMatchDto } from "./types/i-riot-match-dto.type.ts";
 
 /**
@@ -54,23 +55,6 @@ type MatchParticipantProjection = Omit<
 	typeof matchParticipants.$inferInsert,
 	"id" | "matchRowId"
 >;
-
-/**
- * Splits a match id into the platform and game id it is built from.
- *
- * The id is `platform_id + "_" + game_id` in every sampled payload, so this is
- * the authoritative source for both — more so than `info.platformId`, which the
- * caller has no way to have asked for. A `matchId` in some other shape is a
- * caller error rather than a Riot one, so this one does throw.
- */
-const splitMatchId = (matchId: string) => {
-	const separator = matchId.indexOf("_");
-	const gameId = Number(matchId.slice(separator + 1));
-	if (separator <= 0 || !Number.isSafeInteger(gameId)) {
-		throw new Error(`Not a match id: ${matchId}`);
-	}
-	return { platformId: matchId.slice(0, separator), gameId };
-};
 
 /**
  * Splits Riot's build string into the patch it belongs to.
