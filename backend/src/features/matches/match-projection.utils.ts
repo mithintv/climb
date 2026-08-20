@@ -1,5 +1,6 @@
 import type { matchParticipants } from "./../../core/database/models/match-participants.model.ts";
 import type { matches } from "./../../core/database/models/matches.model.ts";
+import type { PerkKind } from "./../../core/database/types/perk-kind.type.ts";
 import type { IRiotMatchDto } from "./types/i-riot-match-dto.type.ts";
 
 /**
@@ -10,13 +11,43 @@ import type { IRiotMatchDto } from "./types/i-riot-match-dto.type.ts";
  * payloads. It is not a schema version: adding a column that was always null
  * before does not change what the existing rows mean.
  */
-export const PROJECTION_VERSION = 1;
+export const PROJECTION_VERSION = 2;
 
-/** The `matches` columns derived from the payload, without the blob itself. */
+/**
+ * The `matches` columns derived from the payload, without the blob itself.
+ *
+ * The five lookup columns are not among them: they are rows in other tables,
+ * and resolving one needs the database. This stays a pure function of the
+ * payload, so it hands the repository the raw values to look up — nullable
+ * here, even though the columns they become are `NOT NULL`, because "the
+ * payload did not say" is a fact about the payload and substituting the
+ * "unknown" row for it is a fact about storage.
+ */
 type MatchProjection = Omit<
 	typeof matches.$inferInsert,
-	"id" | "payload" | "payloadEncoding" | "payloadBytes" | "fetchedAt"
->;
+	| "id"
+	| "matchId"
+	| "payload"
+	| "payloadEncoding"
+	| "payloadBytes"
+	| "fetchedAt"
+	| "queueId"
+	| "mapId"
+	| "gameModeId"
+	| "gameTypeId"
+	| "patchId"
+> & {
+	/** Riot's queue id, e.g. 420. Resolved to a `game_queues` row on write. */
+	queueId: number | null;
+	/** Riot's map id, e.g. 11. */
+	mapId: number | null;
+	/** Riot's mode token, e.g. "CHERRY". */
+	gameMode: string | null;
+	/** Riot's type token, e.g. "MATCHED_GAME". */
+	gameType: string | null;
+	/** The parsed patch, or null when the payload carried no `gameVersion`. */
+	patch: { major: number; minor: number } | null;
+};
 
 /** The `match_participants` columns, before the row they hang off exists. */
 type MatchParticipantProjection = Omit<
@@ -42,6 +73,22 @@ const splitMatchId = (matchId: string) => {
 };
 
 /**
+ * Splits Riot's build string into the patch it belongs to.
+ *
+ * "16.14.794.9266" is patch 16.14 built 794.9266; one patch ships several
+ * builds, and only the first two components are the patch anyone names. They
+ * come back as numbers so 16.9 orders before 16.14, which it would not as text.
+ *
+ * Returns null rather than throwing on anything that is not two leading
+ * numbers, because a `gameVersion` Riot has reshaped must not fail an ingest.
+ */
+export const parseGameVersion = (gameVersion: string | undefined) => {
+	const [major, minor] = (gameVersion ?? "").split(".");
+	if (!/^\d+$/.test(major ?? "") || !/^\d+$/.test(minor ?? "")) return null;
+	return { major: Number(major), minor: Number(minor) };
+};
+
+/**
  * Projects the columns a match is filtered and sorted by.
  *
  * Nothing here throws on a missing field: a payload whose `info` block Riot has
@@ -56,15 +103,14 @@ export const projectMatch = (
 	const info = dto.info;
 
 	return {
-		matchId,
 		platformId,
 		gameId,
 		dataVersion: dto.metadata?.dataVersion ?? null,
 		queueId: info?.queueId ?? null,
 		mapId: info?.mapId ?? null,
 		gameMode: info?.gameMode ?? null,
+		patch: parseGameVersion(info?.gameVersion),
 		gameType: info?.gameType ?? null,
-		gameVersion: info?.gameVersion ?? null,
 		gameCreation: info?.gameCreation ?? null,
 		gameStartMs: info?.gameStartTimestamp ?? null,
 		gameEndMs: info?.gameEndTimestamp ?? null,
@@ -74,34 +120,91 @@ export const projectMatch = (
 	};
 };
 
-/** One entry of `perks.styles`, narrowed off the DTO so it is not restated. */
-type RiotPerkStyle = NonNullable<
-	NonNullable<
-		NonNullable<IRiotMatchDto["info"]>["participants"]
-	>[number]["perks"]
->["styles"];
+/** One participant's `perks` block, narrowed off the DTO so it is not restated. */
+type RiotPerks = NonNullable<
+	NonNullable<IRiotMatchDto["info"]>["participants"]
+>[number]["perks"];
+
+/** One perk a participant took, before the row it hangs off exists. */
+export interface IParticipantPerkPick {
+	/** Which pick this is, and so how to read `slot`. */
+	kind: PerkKind;
+	/** Position within the kind; slot 0 of `PRIMARY` is the keystone. */
+	slot: number;
+	/** The tree it came from. Null for a stat shard, which belongs to none. */
+	styleId: number | null;
+	perkId: number;
+}
+
+/** Every perk one participant took, keyed back to their position in the payload. */
+export interface IParticipantPerks {
+	participantIndex: number;
+	picks: IParticipantPerkPick[];
+}
 
 /**
- * Pulls the two rune trees and the keystone out of `perks.styles`.
+ * Pulls every perk out of one participant's `perks` block — both trees' runes
+ * and the three stat shards.
  *
- * Riot labels the entries `description: "primaryStyle" | "subStyle"`, which is
- * preferred to their order; the positional fallback covers a payload where the
- * label is absent. The keystone is the first selection of the primary tree —
- * the secondary tree has no keystone, only minor runes.
+ * Riot labels the tree entries `description: "primaryStyle" | "subStyle"`,
+ * which is preferred to their order; the positional fallback covers a payload
+ * where the label is absent.
+ *
+ * The shards are read in Riot's own key order — offense, flex, defense — which
+ * becomes slots 0, 1 and 2. An id of 0 is kept rather than dropped: Riot sends
+ * 0 for "no shard", and Arena sends it for all three, so a missing row and a
+ * deliberate zero would otherwise be indistinguishable.
  */
-const projectPerks = (styles: RiotPerkStyle) => {
+const projectPerkPicks = (perks: RiotPerks): IParticipantPerkPick[] => {
+	const styles = perks?.styles;
 	const primary =
 		styles?.find((style) => style.description === "primaryStyle") ??
 		styles?.[0];
 	const sub =
 		styles?.find((style) => style.description === "subStyle") ?? styles?.[1];
 
-	return {
-		perkPrimaryStyle: primary?.style ?? null,
-		perkKeystone: primary?.selections?.[0]?.perk ?? null,
-		perkSubStyle: sub?.style ?? null,
-	};
+	const fromTrees = (
+		[
+			{ style: primary, kind: "PRIMARY" },
+			{ style: sub, kind: "SECONDARY" },
+		] as const
+	).flatMap(({ style, kind }) => {
+		// A tree with no id is a payload that has restructured `perks`; its picks
+		// have nothing to hang off, so they are dropped rather than guessed at.
+		const styleId = style?.style;
+		if (styleId === undefined) return [];
+
+		return (style?.selections ?? []).flatMap((selection, slot) =>
+			selection.perk === undefined
+				? []
+				: [{ kind, slot, styleId, perkId: selection.perk }],
+		);
+	});
+
+	const stats = perks?.statPerks;
+	const fromStats = [stats?.offense, stats?.flex, stats?.defense].flatMap(
+		(perkId, slot) =>
+			perkId === undefined
+				? []
+				: [{ kind: "STAT" as const, slot, styleId: null, perkId }],
+	);
+
+	return [...fromTrees, ...fromStats];
 };
+
+/**
+ * Projects every participant's runes, in the same participant order as
+ * `projectParticipants` — the index is how the two are matched up once the
+ * participant rows have ids.
+ */
+export const projectParticipantPerks = (
+	dto: IRiotMatchDto,
+): IParticipantPerks[] =>
+	(dto.info?.participants ?? []).flatMap((participant, participantIndex) =>
+		participant.puuid
+			? [{ participantIndex, picks: projectPerkPicks(participant.perks) }]
+			: [],
+	);
 
 /**
  * Projects one row per participant, in Riot's own order — the index is half the
@@ -151,7 +254,6 @@ export const projectParticipants = (
 				item4: participant.item4 ?? null,
 				item5: participant.item5 ?? null,
 				item6: participant.item6 ?? null,
-				...projectPerks(participant.perks?.styles),
 				// Riot reports 0 outside Arena rather than omitting the field, and 0
 				// is not a placement — normalised so the column means "finished
 				// where" and nothing else. The payload keeps the 0 either way.

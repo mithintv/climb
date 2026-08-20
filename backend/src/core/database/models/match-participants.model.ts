@@ -15,6 +15,9 @@ import { matches } from "./matches.model.ts";
  *
  * Anything else stays in the payload on `matches`. Adding a column here is a
  * migration plus a re-projection of the stored blobs, never a re-fetch.
+ *
+ * The runes a player took are rows in `match_participant_perks` rather than
+ * columns here, since there are six of them and each is a reference to a perk.
  */
 export const matchParticipants = pgTable(
 	"match_participants",
@@ -55,10 +58,6 @@ export const matchParticipants = pgTable(
 		item4: integer("item4"),
 		item5: integer("item5"),
 		item6: integer("item6"),
-		/** Off `perks.styles`: the primary tree, its keystone, and the secondary tree. */
-		perkPrimaryStyle: integer("perk_primary_style"),
-		perkKeystone: integer("perk_keystone"),
-		perkSubStyle: integer("perk_sub_style"),
 		/** Arena finishing position, 1-8. Null in every other queue. */
 		placement: integer("placement"),
 	},

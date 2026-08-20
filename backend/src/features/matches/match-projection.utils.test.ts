@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { readMatchFixture } from "./fixtures/read-match-fixture.ts";
 import {
 	PROJECTION_VERSION,
+	parseGameVersion,
 	projectMatch,
+	projectParticipantPerks,
 	projectParticipants,
 } from "./match-projection.utils.ts";
 import type { IRiotMatchDto } from "./types/i-riot-match-dto.type.ts";
@@ -54,9 +56,53 @@ describe("projectMatch", () => {
 
 		expect(match.queueId).toBeNull();
 		expect(match.gameMode).toBeNull();
+		expect(match.patch).toBeNull();
 		expect(match.endOfGameResult).toBeNull();
 		expect(projectParticipants({})).toEqual([]);
 	});
+
+	it("hands the mode and patch over raw, for the repository to resolve", () => {
+		// Both are rows in other tables, so the projection stays a pure function of
+		// the payload and does not reach for the database to turn them into ids.
+		const ranked = projectMatch(
+			"NA1_5607525822",
+			fixture("queue-420-ranked-20260724"),
+		);
+		const arena = projectMatch(
+			"NA1_5266526620",
+			fixture("queue-1700-arena-20250414"),
+		);
+
+		expect(ranked.gameMode).toBe("CLASSIC");
+		expect(ranked.patch).toEqual({ major: 16, minor: 14 });
+		expect(arena.gameMode).toBe("CHERRY");
+		expect(arena.patch).toEqual({ major: 15, minor: 7 });
+	});
+});
+
+describe("parseGameVersion", () => {
+	it("keeps only the patch, dropping the build", () => {
+		// "16.14.794.9266" is patch 16.14 built 794.9266, and one patch ships
+		// several builds — so the build is not what a match should be grouped by.
+		expect(parseGameVersion("16.14.794.9266")).toEqual({
+			major: 16,
+			minor: 14,
+		});
+	});
+
+	it("returns numbers, so 16.9 orders before 16.14", () => {
+		const early = parseGameVersion("16.9.1.2");
+		const late = parseGameVersion("16.14.1.2");
+
+		expect(Number(early?.minor) < Number(late?.minor)).toBe(true);
+	});
+
+	it.each([undefined, "", "16", "sixteen.fourteen", "16.x.1"])(
+		"returns null for %s rather than failing an ingest",
+		(version) => {
+			expect(parseGameVersion(version)).toBeNull();
+		},
+	);
 });
 
 describe("projectParticipants", () => {
@@ -76,36 +122,6 @@ describe("projectParticipants", () => {
 		expect(rows[0].win).toBe(true);
 	});
 
-	it("pulls the trees and the keystone out of perks.styles", () => {
-		const [row] = projectParticipants(fixture("queue-420-ranked-20260724"));
-
-		expect(row.perkPrimaryStyle).toBe(8200);
-		expect(row.perkKeystone).toBe(8992);
-		expect(row.perkSubStyle).toBe(8400);
-	});
-
-	it("falls back to the order of perks.styles when the labels are absent", () => {
-		const [row] = projectParticipants({
-			info: {
-				participants: [
-					{
-						puuid: "puuid-00",
-						perks: {
-							styles: [
-								{ style: 8100, selections: [{ perk: 8112 }] },
-								{ style: 8200, selections: [{ perk: 8226 }] },
-							],
-						},
-					},
-				],
-			},
-		});
-
-		expect(row.perkPrimaryStyle).toBe(8100);
-		expect(row.perkKeystone).toBe(8112);
-		expect(row.perkSubStyle).toBe(8200);
-	});
-
 	it("projects Arena, where there are no lanes and everyone has a placement", () => {
 		const rows = projectParticipants(fixture("queue-1700-arena-20250414"));
 
@@ -119,17 +135,6 @@ describe("projectParticipants", () => {
 		// Participants split 100/200 while `info.teams` reports 100 and 0, so the
 		// two do not line up and nothing here derives a side from either.
 		expect(new Set(rows.map((row) => row.teamId))).toEqual(new Set([100, 200]));
-	});
-
-	it("stores Arena's empty rune trees as the zeroes Riot sends", () => {
-		// Arena players have no runes at all: every `perks.styles` entry comes back
-		// with `style: 0` and a first selection of 0. Documented because it reads
-		// like missing data and is not — the payload really says zero.
-		const [row] = projectParticipants(fixture("queue-1700-arena-20250414"));
-
-		expect(row.perkPrimaryStyle).toBe(0);
-		expect(row.perkKeystone).toBe(0);
-		expect(row.perkSubStyle).toBe(0);
 	});
 
 	it("leaves placement null outside Arena, where Riot reports 0", () => {
@@ -149,7 +154,6 @@ describe("projectParticipants", () => {
 
 		expect(row.championName).toBeNull();
 		expect(row.kills).toBeNull();
-		expect(row.perkKeystone).toBeNull();
 		expect(row.puuid).toBe("puuid-00");
 	});
 
@@ -160,5 +164,74 @@ describe("projectParticipants", () => {
 
 		expect(rows).toHaveLength(1);
 		expect(rows[0].participantIndex).toBe(0);
+	});
+});
+
+describe("projectParticipantPerks", () => {
+	it("projects nine picks: four primary, two secondary, three shards", () => {
+		const [first] = projectParticipantPerks(
+			fixture("queue-420-ranked-20260724"),
+		);
+
+		expect(first.participantIndex).toBe(0);
+		expect(first.picks).toEqual([
+			{ kind: "PRIMARY", slot: 0, styleId: 8200, perkId: 8992 },
+			{ kind: "PRIMARY", slot: 1, styleId: 8200, perkId: 8226 },
+			{ kind: "PRIMARY", slot: 2, styleId: 8200, perkId: 8234 },
+			{ kind: "PRIMARY", slot: 3, styleId: 8200, perkId: 8237 },
+			{ kind: "SECONDARY", slot: 0, styleId: 8400, perkId: 8473 },
+			{ kind: "SECONDARY", slot: 1, styleId: 8400, perkId: 8401 },
+			// Riot's own key order — offense, flex, defense — is the slot order.
+			{ kind: "STAT", slot: 0, styleId: null, perkId: 5005 },
+			{ kind: "STAT", slot: 1, styleId: null, perkId: 5010 },
+			{ kind: "STAT", slot: 2, styleId: null, perkId: 5001 },
+		]);
+	});
+
+	it("keeps Arena's zeroes rather than dropping the picks", () => {
+		// Arena players have no runes: every style, selection and shard is 0. A
+		// dropped row and a deliberate zero would otherwise look the same.
+		const [first] = projectParticipantPerks(
+			fixture("queue-1700-arena-20250414"),
+		);
+
+		expect(first.picks).toHaveLength(9);
+		expect(first.picks.every((pick) => pick.perkId === 0)).toBe(true);
+		expect(
+			first.picks
+				.filter((pick) => pick.kind !== "STAT")
+				.every((pick) => pick.styleId === 0),
+		).toBe(true);
+	});
+
+	it("falls back to the order of perks.styles when the labels are absent", () => {
+		const [first] = projectParticipantPerks({
+			info: {
+				participants: [
+					{
+						puuid: "puuid-00",
+						perks: {
+							styles: [
+								{ style: 8100, selections: [{ perk: 8112 }] },
+								{ style: 8200, selections: [{ perk: 8226 }] },
+							],
+						},
+					},
+				],
+			},
+		});
+
+		expect(first.picks).toEqual([
+			{ kind: "PRIMARY", slot: 0, styleId: 8100, perkId: 8112 },
+			{ kind: "SECONDARY", slot: 0, styleId: 8200, perkId: 8226 },
+		]);
+	});
+
+	it("projects no picks at all rather than throwing on a payload without perks", () => {
+		const [first] = projectParticipantPerks({
+			info: { participants: [{ puuid: "puuid-00" }] },
+		});
+
+		expect(first.picks).toEqual([]);
 	});
 });

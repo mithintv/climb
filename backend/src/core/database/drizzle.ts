@@ -2,8 +2,16 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import type { Pool } from "pg";
 
 import { accounts } from "./models/accounts.model.ts";
+import { gameMaps } from "./models/game-maps.model.ts";
+import { gameModes } from "./models/game-modes.model.ts";
+import { gamePlatforms } from "./models/game-platforms.model.ts";
+import { gameQueues } from "./models/game-queues.model.ts";
+import { gameTypes } from "./models/game-types.model.ts";
+import { matchParticipantPerks } from "./models/match-participant-perks.model.ts";
 import { matchParticipants } from "./models/match-participants.model.ts";
 import { matches } from "./models/matches.model.ts";
+import { patches } from "./models/patches.model.ts";
+import { perks } from "./models/perks.model.ts";
 
 /**
  * Every table, as the one object drizzle wants.
@@ -14,7 +22,19 @@ import { matches } from "./models/matches.model.ts";
  * `db.select()` and silently disappears from `db.query`, so a new model file
  * must be added here too.
  */
-const schema = { accounts, matches, matchParticipants };
+const schema = {
+	accounts,
+	gameMaps,
+	gameModes,
+	gamePlatforms,
+	gameQueues,
+	gameTypes,
+	matches,
+	matchParticipantPerks,
+	matchParticipants,
+	patches,
+	perks,
+};
 
 /**
  * Drizzle over a node-postgres pool.

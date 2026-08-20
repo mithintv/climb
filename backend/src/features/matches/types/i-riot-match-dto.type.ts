@@ -71,6 +71,12 @@ export interface IRiotMatchDto {
 					style?: number;
 					selections?: { perk?: number }[];
 				}[];
+				/**
+				 * The three stat shards, as perk ids. Riot's own key order is the slot
+				 * order stored: offense, flex, defense. An id of 0 means no shard,
+				 * which Arena reports for all three.
+				 */
+				statPerks?: { offense?: number; flex?: number; defense?: number };
 			};
 		}[];
 	};

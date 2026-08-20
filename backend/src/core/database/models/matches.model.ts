@@ -1,6 +1,13 @@
+import { type SQL, sql } from "drizzle-orm";
 import { bigint, integer, pgTable, serial, text } from "drizzle-orm/pg-core";
 
 import { bytea } from "./../bytea.ts";
+import { gameMaps } from "./game-maps.model.ts";
+import { gameModes } from "./game-modes.model.ts";
+import { gamePlatforms } from "./game-platforms.model.ts";
+import { gameQueues } from "./game-queues.model.ts";
+import { gameTypes } from "./game-types.model.ts";
+import { patches } from "./patches.model.ts";
 
 /**
  * One completed match, stored whole.
@@ -20,23 +27,59 @@ import { bytea } from "./../bytea.ts";
  */
 export const matches = pgTable("matches", {
 	id: serial("id").primaryKey(),
-	/**
-	 * Riot's match id, e.g. "NA1_5451234567". Not split into its parts on top of
-	 * `platform_id` and `game_id`, because it is exactly
-	 * `platform_id + "_" + game_id` in every sampled payload.
-	 */
-	matchId: text("match_id").notNull().unique(),
-	platformId: text("platform_id").notNull(),
+	/** The shard the game was played on, e.g. "NA1". */
+	platformId: text("platform_id")
+		.notNull()
+		.references(() => gamePlatforms.id),
 	/** Riot's per-platform game id. Exceeds a 32-bit `integer` on live shards. */
 	gameId: bigint("game_id", { mode: "number" }).notNull(),
+	/**
+	 * Riot's match id, e.g. "NA1_5451234567" — computed, not stored twice.
+	 *
+	 * It is exactly `platform_id + "_" + game_id` in every sampled payload, so
+	 * the database derives it rather than trusting a caller to keep the three in
+	 * step. `STORED` rather than a view or an expression index because this is
+	 * what every read looks a match up by and what carries the unique constraint.
+	 *
+	 * Being generated means it is never inserted: `matches.$inferInsert` leaves
+	 * it out, and `INSERT … (match_id)` is an error rather than a silent
+	 * overwrite.
+	 */
+	matchId: text("match_id")
+		.notNull()
+		.unique()
+		.generatedAlwaysAs(
+			(): SQL => sql`${matches.platformId} || '_' || ${matches.gameId}`,
+		),
 	/** Match-V5 payload version off `metadata`, e.g. "2". */
 	dataVersion: text("data_version"),
-	queueId: integer("queue_id"),
-	mapId: integer("map_id"),
-	/** "CLASSIC", "ARAM", "CHERRY" (Arena). */
-	gameMode: text("game_mode"),
-	gameType: text("game_type"),
-	gameVersion: text("game_version"),
+	/**
+	 * What the match was: its queue, map, mode, type and patch, each a row in its
+	 * own table rather than a value repeated across every match.
+	 *
+	 * `queue_id` and `map_id` still hold Riot's own numbers — 420, 11 — because
+	 * those tables are keyed on them; the other three are surrogate ids.
+	 *
+	 * All five are `NOT NULL`, unlike every other projected column, so a reader
+	 * never has to handle a match with no queue or no patch. Ingest keeps that
+	 * true without being able to fail: a payload that does not say resolves to
+	 * the "unknown" rows instead — see `unknown-lookup-row.constant.ts`.
+	 */
+	queueId: integer("queue_id")
+		.notNull()
+		.references(() => gameQueues.id),
+	mapId: integer("map_id")
+		.notNull()
+		.references(() => gameMaps.id),
+	gameModeId: integer("game_mode_id")
+		.notNull()
+		.references(() => gameModes.id),
+	gameTypeId: integer("game_type_id")
+		.notNull()
+		.references(() => gameTypes.id),
+	patchId: integer("patch_id")
+		.notNull()
+		.references(() => patches.id),
 	gameCreation: bigint("game_creation", { mode: "number" }),
 	gameStartMs: bigint("game_start_ms", { mode: "number" }),
 	gameEndMs: bigint("game_end_ms", { mode: "number" }),

@@ -5,12 +5,27 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createTestDatabase } from "./../../core/database/create-test-database.ts";
 import { DRIZZLE } from "./../../core/database/database.constant.ts";
 import type { Drizzle } from "./../../core/database/drizzle.ts";
+import { gameMaps } from "./../../core/database/models/game-maps.model.ts";
+import { gameModes } from "./../../core/database/models/game-modes.model.ts";
+import { gamePlatforms } from "./../../core/database/models/game-platforms.model.ts";
+import { gameQueues } from "./../../core/database/models/game-queues.model.ts";
+import { gameTypes } from "./../../core/database/models/game-types.model.ts";
+import { matchParticipantPerks } from "./../../core/database/models/match-participant-perks.model.ts";
 import { matchParticipants } from "./../../core/database/models/match-participants.model.ts";
 import { matches } from "./../../core/database/models/matches.model.ts";
+import { patches } from "./../../core/database/models/patches.model.ts";
+import { perks } from "./../../core/database/models/perks.model.ts";
 import { readMatchFixture } from "./fixtures/read-match-fixture.ts";
 import { MatchRepository } from "./match.repository.ts";
 import { decodeMatchPayload } from "./match-payload.utils.ts";
 import type { IRiotMatchDto } from "./types/i-riot-match-dto.type.ts";
+import {
+	UNKNOWN_GAME_MODE,
+	UNKNOWN_GAME_TYPE,
+	UNKNOWN_MAP_ID,
+	UNKNOWN_PATCH,
+	UNKNOWN_QUEUE_ID,
+} from "./unknown-lookup-row.constant.ts";
 
 const RANKED_MATCH_ID = "NA1_5607525822";
 const ARENA_MATCH_ID = "NA1_5266526620";
@@ -105,6 +120,151 @@ describe("MatchRepository.ingest", () => {
 		expect(
 			JSON.parse(decodeMatchPayload(payload.payload, payload.payloadEncoding)),
 		).toEqual(JSON.parse(body));
+	});
+
+	it("computes match_id from the platform and game id", async () => {
+		// The column is GENERATED ALWAYS, so nothing inserts it — the database
+		// derives it, and the three can never disagree.
+		await repository.ingest(
+			toStore(RANKED_MATCH_ID, "queue-420-ranked-20260724"),
+		);
+
+		const row = await rowFor(RANKED_MATCH_ID);
+
+		expect(row.matchId).toBe(`${row.platformId}_${row.gameId}`);
+		expect(row.matchId).toBe(RANKED_MATCH_ID);
+	});
+
+	it("resolves every lookup to a row, reusing them across matches", async () => {
+		await repository.ingest(
+			toStore(RANKED_MATCH_ID, "queue-420-ranked-20260724"),
+		);
+		await repository.ingest(
+			toStore(ARENA_MATCH_ID, "queue-1700-arena-20250414"),
+		);
+
+		expect(
+			(await db.select().from(gameModes)).map((row) => row.mode).sort(),
+		).toEqual(["CHERRY", "CLASSIC"]);
+		expect((await db.select().from(gameTypes)).map((row) => row.type)).toEqual([
+			"MATCHED_GAME",
+		]);
+		// Numeric sort: the default one is lexicographic, which puts 1700 before 420.
+		expect(
+			(await db.select().from(gameQueues))
+				.map((row) => row.id)
+				.sort((a, b) => a - b),
+		).toEqual([420, 1700]);
+		expect(
+			(await db.select().from(gameMaps))
+				.map((row) => row.id)
+				.sort((a, b) => a - b),
+		).toEqual([11, 30]);
+		expect(
+			(await db.select().from(gamePlatforms)).map((row) => row.id),
+		).toEqual(["NA1"]);
+		expect(
+			(await db.select().from(patches))
+				.map((row) => `${row.major}.${row.minor}`)
+				.sort(),
+		).toEqual(["15.7", "16.14"]);
+
+		// A third match on a patch and platform already seen must reuse those rows
+		// rather than adding more.
+		await repository.ingest({
+			...toStore(RANKED_MATCH_ID, "queue-420-ranked-20260724"),
+			matchId: "NA1_5607525823",
+		});
+		expect(await db.select().from(patches)).toHaveLength(2);
+		expect(await db.select().from(gamePlatforms)).toHaveLength(1);
+	});
+
+	it("ingests a payload that names no queue, map, mode, type or patch", async () => {
+		// Those five columns are NOT NULL, so without the "unknown" rows this
+		// insert would fail and the payload — the thing worth keeping — would be
+		// lost. The platform is exempt: it comes from the match id, not the body.
+		const body = JSON.stringify({ info: { participants: [] } });
+
+		const { stored } = await repository.ingest({
+			matchId: "NA1_7",
+			body,
+			dto: JSON.parse(body) as IRiotMatchDto,
+			fetchedAt: 1000,
+		});
+
+		expect(stored).toBe(true);
+		const [mode] = await db.select().from(gameModes);
+		const [type] = await db.select().from(gameTypes);
+		const [queue] = await db.select().from(gameQueues);
+		const [map] = await db.select().from(gameMaps);
+		const [patch] = await db.select().from(patches);
+
+		expect(mode.mode).toBe(UNKNOWN_GAME_MODE);
+		expect(type.type).toBe(UNKNOWN_GAME_TYPE);
+		expect(queue.id).toBe(UNKNOWN_QUEUE_ID);
+		expect(map.id).toBe(UNKNOWN_MAP_ID);
+		expect({ major: patch.major, minor: patch.minor }).toEqual(UNKNOWN_PATCH);
+		expect((await rowFor("NA1_7")).platformId).toBe("NA1");
+	});
+
+	it("writes nine perk rows per participant and a perks row for each id", async () => {
+		await repository.ingest(
+			toStore(RANKED_MATCH_ID, "queue-420-ranked-20260724"),
+		);
+
+		const rows = await db.select().from(matchParticipantPerks);
+		expect(rows).toHaveLength(90); // 10 participants x 9 picks
+
+		const [participant] = await db
+			.select()
+			.from(matchParticipants)
+			.where(eq(matchParticipants.participantIndex, 0));
+		const mine = rows
+			.filter((row) => row.matchParticipantId === participant.id)
+			.sort((a, b) => a.id - b.id);
+
+		expect(mine.map((row) => `${row.kind}${row.slot}`)).toEqual([
+			"PRIMARY0",
+			"PRIMARY1",
+			"PRIMARY2",
+			"PRIMARY3",
+			"SECONDARY0",
+			"SECONDARY1",
+			"STAT0",
+			"STAT1",
+			"STAT2",
+		]);
+		// The keystone is slot 0 of the primary tree.
+		expect(mine[0].perkId).toBe(8992);
+		expect(mine[0].styleId).toBe(8200);
+		// Stat shards belong to no tree.
+		expect(mine.slice(6).every((row) => row.styleId === null)).toBe(true);
+
+		// Every id referenced has a row to point at, created by ingest even though
+		// nothing has seeded the table in this test.
+		const known = new Set((await db.select().from(perks)).map((row) => row.id));
+		expect(
+			rows.every(
+				(row) =>
+					known.has(row.perkId) &&
+					(row.styleId === null || known.has(row.styleId)),
+			),
+		).toBe(true);
+	});
+
+	it("writes Arena's zero perks rather than failing on an unknown rune", async () => {
+		// Arena reports style 0 and perk 0 throughout. There is no perk 0 in Data
+		// Dragon, so without ingest creating the row the foreign key would reject
+		// the whole match.
+		await repository.ingest(
+			toStore(ARENA_MATCH_ID, "queue-1700-arena-20250414"),
+		);
+
+		const rows = await db.select().from(matchParticipantPerks);
+
+		expect(rows).toHaveLength(144); // 16 participants x 9
+		expect(rows.every((row) => row.perkId === 0)).toBe(true);
+		expect((await db.select().from(perks)).map((row) => row.id)).toEqual([0]);
 	});
 
 	it("does nothing on a second ingest of the same match", async () => {
