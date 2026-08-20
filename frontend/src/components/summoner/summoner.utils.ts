@@ -1,10 +1,11 @@
+import { csPerMinute } from "@/lib/cs-per-minute";
 import type { ILeagueEntry } from "@/types/riot/i-league-entry.type";
 import type { IMatch } from "@/types/riot/i-match.type";
 import type { IMatchParticipant } from "@/types/riot/i-match-participant.type";
 
 /**
  * A riot id in a URL. `#` is a fragment delimiter, so the path uses a hyphen —
- * `/summoner/Sneaky-NA69` — the way every other tracker does.
+ * `/profile/Sneaky-NA69` — the way every other tracker does.
  */
 export const toRiotIdParam = (gameName: string, tagLine: string) =>
 	`${gameName}-${tagLine}`;
@@ -20,6 +21,20 @@ export const parseRiotIdParam = (param: string) => {
 		gameName: param.slice(0, separator),
 		tagLine: param.slice(separator + 1),
 	};
+};
+
+/**
+ * What someone typed into a search box, split into a riot id. The tag is
+ * optional — `Sneaky` and `Sneaky#NA69` both resolve — and defaults to the one
+ * region the site serves.
+ *
+ * Returns null for input that cannot name an account, so a caller can decline
+ * to navigate rather than routing to a profile that will 404.
+ */
+export const parseTypedRiotId = (typed: string, defaultTagLine: string) => {
+	const [gameName, tagLine] = typed.trim().split("#");
+	if (!gameName) return null;
+	return { gameName, tagLine: tagLine || defaultTagLine };
 };
 
 /** The queue whose rank a profile leads with. */
@@ -64,7 +79,26 @@ export interface IRecentRecord {
 	kills: number;
 	deaths: number;
 	assists: number;
+	/**
+	 * Minions and monsters per minute, averaged over the games rather than over
+	 * the total time played: a 45-minute game should not weigh three times a
+	 * 15-minute one when the figure is "how well do you farm".
+	 */
+	csPerMinute: number;
+	/** Gold per minute, averaged the same way. */
+	goldPerMinute: number;
+	/** Vision score per game — a total, not a rate, which is how it is read. */
+	visionScore: number;
 }
+
+/**
+ * Riot omits `challenges` on some payloads — Arena games and anything from
+ * before the block was added — where the rest of the participant is intact. A
+ * missing block is zero rather than a crash, because it costs one game's
+ * contribution to an average instead of the whole profile.
+ */
+const goldPerMinuteOf = (player: IMatchParticipant) =>
+	player.challenges?.goldPerMinute ?? 0;
 
 /**
  * Totals the player's own line across the loaded matches. Averages are per
@@ -82,6 +116,9 @@ export const recentRecord = (
 		kills: 0,
 		deaths: 0,
 		assists: 0,
+		csPerMinute: 0,
+		goldPerMinute: 0,
+		visionScore: 0,
 	};
 
 	for (const match of matches) {
@@ -96,12 +133,21 @@ export const recentRecord = (
 		record.kills += player.kills;
 		record.deaths += player.deaths;
 		record.assists += player.assists;
+		record.csPerMinute += csPerMinute(
+			player.totalMinionsKilled + player.neutralMinionsKilled,
+			match.info.gameDuration,
+		);
+		record.goldPerMinute += goldPerMinuteOf(player);
+		record.visionScore += player.visionScore;
 	}
 
 	if (record.games > 0) {
 		record.kills /= record.games;
 		record.deaths /= record.games;
 		record.assists /= record.games;
+		record.csPerMinute /= record.games;
+		record.goldPerMinute /= record.games;
+		record.visionScore /= record.games;
 	}
 
 	return record;

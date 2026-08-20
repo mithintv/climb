@@ -1,20 +1,91 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
 	--font-heading: var(--font-sans);
-	--font-sans: "Geist Variable", sans-serif;
+	--font-sans: "Space Grotesk Variable", Helvetica, sans-serif;
 	/*
-	 * The client's own gold, not a Tailwind amber: this is the colour Riot rules
-	 * and frames its ranked UI in, so it reads as the game's rather than as a
-	 * yellow we picked. It is the accent — section glyphs and card edges — while
-	 * teal stays the surface family and `--primary` the interactive colour.
+	 * Every numeral, label and piece of metadata on the profile is mono — that is
+	 * what makes a column of KDAs and gold figures read as a column rather than
+	 * as prose. UI text stays in the sans above.
 	 */
-	--color-gold: #c8aa6e;
+	--font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+	/*
+	 * The design handoff's gold, replacing the client's own #c8aa6e: it is a
+	 * brighter, more saturated yellow, and the handoff spends it on currency
+	 * figures and the quest slot rather than on card frames. Everything gold is
+	 * this one value now — there is no second amber anywhere in the spec.
+	 */
+	--color-gold: #e8b64c;
+
+	/*
+	 * The semantic set. Each figure on the profile is coloured by what it
+	 * measures rather than by how good it is, so a reader learns the colour once:
+	 * purple is always creep score, gold is always currency, red is always
+	 * vision. Win and loss are the exception — those do carry judgement.
+	 */
+	--color-victory: #3fe8a6;
+	--color-defeat: #ff6b7a;
+	--color-kda: #7cc4ff;
+	--color-cs: #b18cff;
+	/* Deliberately the same red as `defeat`: the handoff uses one red, and
+	   nothing on the page shows a vision figure next to a result. */
+	--color-vision: #ff6b7a;
+
+	/*
+	 * The text ramp, six steps from the name at the top of the page down to an
+	 * axis label. These are not a lightness scale for its own sake — each step is
+	 * a rank in the reading order, and the handoff assigns them by role, so a
+	 * value never shares a step with the label naming it.
+	 */
+	--color-ink: #e8ece9;
+	--color-ink-secondary: #b6bfba;
+	--color-ink-tertiary: #8b9691;
+	--color-ink-label: #6d7973;
+	--color-ink-muted: #566059;
+	--color-ink-faint: #4b544f;
+	/* The glyph and initials inside an art placeholder, which must read as absent
+	   art rather than as content. */
+	--color-ink-placeholder: #7d8a84;
+
+	/*
+	 * Surfaces. Four near-blacks a couple of points apart: the page, the stat
+	 * cells sitting on it, and the two hover tints. They are this close on
+	 * purpose — a row lighting up under the cursor should be felt rather than
+	 * seen, because ten of them are visible at once.
+	 */
+	--color-surface: #0a0c0b;
+	--color-panel: #0c0f0e;
+	--color-row-hover: #0d100f;
+	--color-rail-hover: #0e1210;
+	/* Inventory and art slots, and the two tinted variants: spells sit on a
+	   green-black, anything quest- or keystone-related on a gold-black. */
+	--color-slot: #0f1311;
+	--color-spell-slot: #10150f;
+	--color-quest-slot: #14110a;
+
+	/*
+	 * Borders, darkest to lightest. The distinction that matters is section
+	 * versus row: a section edge is visible, a row divider is barely there, and
+	 * mixing them is what makes a dense list read as a grid instead of a list.
+	 */
+	--color-edge: #191d1b;
+	--color-divider: #141816;
+	--color-divider-subtle: #101413;
+	--color-control: #232926;
+	--color-slot-edge: #1e2422;
+	--color-quest-edge: #2e2a1c;
+
+	/* The LP chart and progress bar, which are the only drawn graphics here. */
+	--color-track: #1b2320;
+	--color-grid-mid: #181d1b;
+	--color-grid-base: #1c211f;
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -91,46 +162,54 @@
 }
 
 /*
- * Near-black surfaces carrying only a trace of teal — they read as neutral
- * greys until something actually teal sits beside them. The hue is constant at
- * ~180° and only lightness changes, so a card on the page is the same colour a
- * shade lighter rather than a second tint. Saturation is kept this low on
- * purpose: `--primary` and the accent utilities are the only real teal, and the
- * champion, item and rune art — none of which we control — should stay the most
- * colourful thing on screen.
+ * The shadcn slots, pointed at the handoff's palette so a primitive dropped on
+ * the page (a select, an input, a hover card) lands on the same four near-blacks
+ * everything else uses rather than on the old teal-tinted set.
+ *
+ * The mapping is one-way on purpose: `--background` is the handoff's page
+ * colour, `--card` its panel, `--foreground` its primary ink, `--border` its
+ * section edge. Where the handoff has no equivalent — `--input`, `--ring` — the
+ * nearest control value stands in, because those only ever draw on a control.
  */
 .dark {
-	--background: #070808;
-	--foreground: #c6cac9;
-	--card: #101211;
-	--card-foreground: #c6cac9;
-	--popover: #101211;
-	--popover-foreground: #e2e4e3;
-	--primary: #14b8a6;
-	--primary-foreground: #070808;
-	--secondary: #1a1d1c;
-	--secondary-foreground: #e2e4e3;
-	--muted: #1a1d1c;
-	--muted-foreground: #909392;
-	--accent: #1a1d1c;
-	--accent-foreground: #e2e4e3;
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: #2dd4bf;
-	--chart-1: #2dd4bf;
-	--chart-2: #14b8a6;
-	--chart-3: #0d9488;
-	--chart-4: #1a1d1c;
-	--chart-5: #101211;
-	--sidebar: #101211;
-	--sidebar-foreground: #c6cac9;
-	--sidebar-primary: #14b8a6;
-	--sidebar-primary-foreground: #070808;
-	--sidebar-accent: #1a1d1c;
-	--sidebar-accent-foreground: #e2e4e3;
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: #2dd4bf;
+	--background: #0a0c0b;
+	--foreground: #e8ece9;
+	--card: #0c0f0e;
+	--card-foreground: #e8ece9;
+	--popover: #0c0f0e;
+	--popover-foreground: #e8ece9;
+	/*
+	 * The handoff's positive teal, replacing #14b8a6. It is the wordmark, the
+	 * win state and every "this is good" figure, so it is the interactive colour
+	 * too — there is no separate brand teal left to keep.
+	 */
+	--primary: #3fe8a6;
+	--primary-foreground: #0a0c0b;
+	--secondary: #10150f;
+	--secondary-foreground: #e8ece9;
+	--muted: #191d1b;
+	/* The label step, so an unstyled `text-muted-foreground` already lands on the
+	   colour the handoff gives labels. */
+	--muted-foreground: #6d7973;
+	--accent: #0e1210;
+	--accent-foreground: #e8ece9;
+	--destructive: #ff6b7a;
+	--border: #191d1b;
+	--input: #232926;
+	--ring: #3fe8a6;
+	--chart-1: #3fe8a6;
+	--chart-2: #7cc4ff;
+	--chart-3: #b18cff;
+	--chart-4: #e8b64c;
+	--chart-5: #ff6b7a;
+	--sidebar: #0c0f0e;
+	--sidebar-foreground: #e8ece9;
+	--sidebar-primary: #3fe8a6;
+	--sidebar-primary-foreground: #0a0c0b;
+	--sidebar-accent: #0e1210;
+	--sidebar-accent-foreground: #e8ece9;
+	--sidebar-border: #191d1b;
+	--sidebar-ring: #3fe8a6;
 }
 
 /*
@@ -157,42 +236,11 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
+		/* Flat. The page it carries is drawn entirely in hairlines a couple of
+		   points off the background, and the grain and teal wash that used to sit
+		   here were both louder than any of them — a 3.5% diagonal is invisible
+		   under a card but not under a #141816 row divider. */
 		@apply bg-background text-foreground antialiased;
-		/* Teal rising off the bottom edge and gone by the lower third, so the page
-		   a match list actually occupies is black.
-
-		   Over it, a film grain: an inline SVG of fractal noise, desaturated to
-		   grey and tiled at 200px. Generated rather than shipped as an image, so
-		   there is no request and nothing to keep in sync; `stitchTiles` makes the
-		   turbulence wrap, so the tile edges do not show as a grid. The opacity is
-		   baked into the SVG because a background layer cannot carry its own —
-		   that number is the dial if it wants to be stronger or weaker.
-
-		   Under the grain, teal hairlines on a shallow diagonal: a 1px line every
-		   14px, which gives the surface a direction the noise cannot. The angle is
-		   deliberately not 45° — a true diagonal lines up with the corners of the
-		   cards sitting on it and reads as a moiré.
-
-		   Fixed, so a long list scrolls through the light rather than dragging it
-		   down the page. */
-		background-image:
-			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.09'/%3E%3C/svg%3E"),
-			repeating-linear-gradient(
-				20deg,
-				oklch(0.7 0.08 182 / 3.5%) 0px,
-				oklch(0.7 0.08 182 / 3.5%) 1px,
-				transparent 1px,
-				transparent 14px
-			),
-			radial-gradient(ellipse 80% 24% at 50% 108%, #0c2a29 0%, transparent 70%),
-			linear-gradient(to top, #0a1211 0%, #070808 26%);
-		background-repeat: repeat, repeat, no-repeat, no-repeat;
-		background-size:
-			200px 200px,
-			auto,
-			cover,
-			cover;
-		background-attachment: fixed;
 		min-height: 100vh;
 	}
 	html {
@@ -212,29 +260,64 @@
 	/* Firefox and anything else honouring the standard properties. */
 	* {
 		scrollbar-width: thin;
-		scrollbar-color: var(--muted) transparent;
+		scrollbar-color: var(--color-control) transparent;
 	}
 
-	/* WebKit ignores scrollbar-color, so the thumb is drawn again here. Inset
-	   via a transparent border so it reads as a slim pill rather than a bar
-	   welded to the edge. */
+	/* WebKit ignores scrollbar-color, so the thumb is drawn again here. Two of
+	   these are visible side by side on the profile, so they are narrower and
+	   darker than a default bar — a scrollbar per pane should not read as a third
+	   column. */
 	::-webkit-scrollbar {
-		width: 10px;
-		height: 10px;
+		width: 8px;
+		height: 8px;
 	}
 	::-webkit-scrollbar-track {
 		background: transparent;
 	}
 	::-webkit-scrollbar-thumb {
-		background-color: var(--muted);
-		background-clip: padding-box;
-		border: 2px solid transparent;
-		border-radius: 9999px;
+		background-color: #1f2523;
+		border-radius: 4px;
 	}
 	::-webkit-scrollbar-thumb:hover {
-		background-color: var(--muted-foreground);
+		background-color: var(--color-control);
 	}
 	::-webkit-scrollbar-corner {
 		background: transparent;
 	}
+}
+
+/*
+ * The gutter the whole app is inset by. It collapses to 24px on a phone and
+ * stops growing at 320px, so the profile's two panes stay a readable measure on
+ * an ultrawide instead of stretching to the glass. The header and the page below
+ * it both take it, which is what puts the wordmark over the profile icon.
+ *
+ * Wider than the handoff's 16px/3.5vw/220px: at the sizes this is actually read
+ * on, that put the rail's left edge almost against the window, and the page has
+ * no card frames to hold it off the glass on its own.
+ *
+ * The vw term is what costs something. The match pane needs about 880px before
+ * its columns collide, and the gutter takes that width out of the pane first,
+ * so every point of vw here is width the cards give up.
+ */
+@utility page-gutter {
+	padding-inline: clamp(32px, 11vw, 480px);
+}
+
+/*
+ * The diagonal hatch standing in for art that has not been supplied — champion
+ * portraits, the profile icon, the rank emblem. It is deliberately not a flat
+ * grey block: a hatch reads as "nothing is here yet" where a block reads as a
+ * loaded image that happens to be dark.
+ *
+ * The stripe pitch scales with the tile, so a 16px roster portrait is not one
+ * solid diagonal. Set `--tile-stripe-pitch` to half the intended band width.
+ */
+@utility tile-stripe {
+	--tile-stripe-pitch: 4px;
+	background: repeating-linear-gradient(
+		135deg,
+		#161b18 0 var(--tile-stripe-pitch),
+		#0f1311 var(--tile-stripe-pitch) calc(var(--tile-stripe-pitch) * 2)
+	);
 }

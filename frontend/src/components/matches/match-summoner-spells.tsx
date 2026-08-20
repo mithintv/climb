@@ -1,5 +1,9 @@
 import summonerSpellLibrary from "@assets/summoner.json";
 
+import { cn } from "@/lib/utils";
+
+import type { MatchSlotSize } from "./types/match-slot-size.type";
+
 // Data Dragon's spell art, committed rather than requested off the CDN: its
 // image path is versioned, so hotlinking pins every icon to whatever patch the
 // URL was written against. The files keep Data Dragon's own names so a spell's
@@ -22,42 +26,59 @@ const SUMMONER_SPELL_ICONS: Record<string, string> = Object.fromEntries(
 	]),
 );
 
-interface SummonerSpell {
+/** Slot geometry per size step, matching the runes beside them exactly. */
+const SPELL_SLOT_CLASS: Record<MatchSlotSize, string> = {
+	card: "size-[25px]",
+	scoreboard: "size-[15px]",
+};
+
+interface ISummonerSpell {
 	key: string;
 	name: string;
 	image: { full: string };
 }
 
-interface MatchSummonerSpellsProps {
+interface IMatchSummonerSpellsProps {
 	spell1: number;
 	spell2: number;
+	size: MatchSlotSize;
 }
 
-export const MatchSummonerSpells = (props: MatchSummonerSpellsProps) => {
+/**
+ * The two summoner spells, as the left half of the loadout cluster. Squares,
+ * where the runes beside them are circles — see `match-runes.tsx`.
+ */
+export const MatchSummonerSpells = (props: IMatchSummonerSpellsProps) => {
 	// returns summoner spell object given spell ID
-	const fetchSpell = (spellId: number) => {
-		return Object.values<SummonerSpell>(summonerSpellLibrary.data).find(
+	const fetchSpell = (spellId: number) =>
+		Object.values<ISummonerSpell>(summonerSpellLibrary.data).find(
 			(spell) => parseInt(spell.key, 10) === spellId,
 		);
-	};
 
 	const spell1 = fetchSpell(props.spell1);
 	const spell2 = fetchSpell(props.spell2);
 
 	if (!spell1 || !spell2) return null;
 
+	const slot = cn(
+		SPELL_SLOT_CLASS[props.size],
+		"border border-control bg-spell-slot",
+	);
+
 	return (
-		<div className="flex flex-col gap-0.5">
+		<div className="flex flex-col gap-1">
 			<img
-				className="size-6 rounded border border-white/10"
+				className={slot}
 				src={SUMMONER_SPELL_ICONS[spell1.image.full]}
 				alt={spell1.name}
+				title={spell1.name}
 				loading="lazy"
 			/>
 			<img
-				className="size-6 rounded border border-white/10"
+				className={slot}
 				src={SUMMONER_SPELL_ICONS[spell2.image.full]}
 				alt={spell2.name}
+				title={spell2.name}
 				loading="lazy"
 			/>
 		</div>

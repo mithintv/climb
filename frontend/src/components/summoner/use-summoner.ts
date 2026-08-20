@@ -7,12 +7,13 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3080";
 
 /**
  * How many matches a page holds, on first paint and on every scroll after it.
+ * Exported so the "load more" button can name the number it will fetch.
  *
  * A full page is also how the hook knows more exist: the backend serves what its
  * index holds and backfills from Riot to fill the window, so a short page means
  * the account's history has run out rather than that the cache has.
  */
-const MATCH_PAGE_SIZE = 10;
+export const MATCH_PAGE_SIZE = 10;
 
 /**
  * How long to wait before the first retry of a rate-limited page, when the

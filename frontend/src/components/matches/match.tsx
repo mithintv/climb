@@ -1,25 +1,18 @@
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import {
+	ChevronDownIcon,
+	ChevronUpIcon,
+	CircleCheckIcon,
+	CircleXIcon,
+} from "lucide-react";
+import type { KeyboardEvent } from "react";
 
 import { GoldIcon } from "@/assets/icons/gold-icon";
 import { MinionsIcon } from "@/assets/icons/minions-icon";
 import { VisionIcon } from "@/assets/icons/vision-icon";
 import { cn } from "@/lib/utils";
-import { Button } from "@/ui/button";
-import { Label } from "@/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/ui/select";
-import { Textarea } from "@/ui/textarea";
+import type { IMatch } from "@/types/riot/i-match.type";
+import type { IMatchParticipant } from "@/types/riot/i-match-participant.type";
 
-import type { IMatch } from "../../types/riot/i-match.type";
-import type { IMatchNotes } from "../../types/riot/i-match-notes.type";
-import type { IMatchParticipant } from "../../types/riot/i-match-participant.type";
-import type { MatchState } from "../../types/riot/match-state.type";
 import {
 	formatGameMode,
 	MATCH_QUEUE_NAMES,
@@ -27,15 +20,17 @@ import {
 import {
 	formatDuration,
 	formatGold,
+	formatMatchDate,
 	formatRelativeTime,
 	kdaRatio,
 } from "./match.utils";
 import { MatchChampion } from "./match-champion";
 import { MatchItems } from "./match-items";
-import { MatchRunes } from "./match-runes";
-import { MatchSummonerSpells } from "./match-summoner-spells";
-import { MatchTeams } from "./match-teams";
+import { MatchLoadout } from "./match-loadout";
+import { MatchRoster } from "./match-roster";
+import { MatchScoreboard } from "./match-scoreboard/match-scoreboard";
 
+/** Summoner's Rift positions, in the order a scoreboard lists them. */
 const POSITION_ORDER = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
 
 // Sorting rather than looking each position up keeps every participant, even in
@@ -48,318 +43,233 @@ const byPosition = (team: IMatchParticipant[]) =>
 	);
 
 /**
- * Splits a match payload into the searched player's line and the two teams.
- * Pure, because the page owns the fetching now — a card renders whatever it is
- * handed, so the champion stats can aggregate the same payloads.
- */
-const toMatchState = (
-	match: IMatch,
-	puuid: string,
-	notes: IMatchNotes | null,
-): MatchState => {
-	const player = match.info.participants.find(
-		(participant) => participant.puuid === puuid,
-	);
-
-	const empty: MatchState = {
-		data: false,
-		player: null,
-		game: null,
-		team100: [],
-		team200: [],
-		notes,
-	};
-	if (!player) return empty;
-
-	return {
-		data: true,
-		player,
-		game: {
-			gameCreation: match.info.gameCreation,
-			gameDuration: match.info.gameDuration,
-			gameStartTimestamp: match.info.gameStartTimestamp,
-			gameEndTimestamp: match.info.gameEndTimestamp,
-			gameId: match.info.gameId,
-			gameMode: match.info.gameMode,
-			gameVersion: match.info.gameVersion,
-			mapId: match.info.mapId,
-			queueId: match.info.queueId,
-		},
-		team100: byPosition(
-			match.info.participants.filter(
-				(participant) => participant.teamId === 100,
-			),
-		),
-		team200: byPosition(
-			match.info.participants.filter(
-				(participant) => participant.teamId === 200,
-			),
-		),
-		notes,
-	};
-};
-
-/**
- * One figure in the stat block: the value with its rate or unit underneath.
- * Two of these stacked make a column, which is roughly half the width the same
- * figures took as separate side-by-side blocks.
- */
-const StatCell = (props: {
-	value: React.ReactNode;
-	sub: string;
-	/** The game's scoreboard glyph, naming the figure without spending a word. */
-	icon?: React.ReactNode;
-	/** Spells out what the icon means, since the glyph carries the label. */
-	title?: string;
-}) => (
-	<div
-		className="flex flex-col items-center text-center leading-tight"
-		title={props.title}
-	>
-		<span className="flex items-center gap-1 font-semibold text-foreground text-xs tabular-nums">
-			{props.value}
-			{props.icon}
-		</span>
-		<span className="text-[9px] text-muted-foreground tabular-nums">
-			{props.sub}
-		</span>
-	</div>
-);
-
-/**
  * Holds a card's footprint while the profile is loading. The height tracks the
- * loaded card — five team rows plus padding — so the list does not jump.
+ * loaded card — a 46px portrait inside 16px of padding, over a divider.
  */
 export const MatchSkeleton = () => (
-	<div className="h-[102px] animate-pulse rounded-xl border border-gold/25 bg-card/40 card-raised" />
+	<div className="h-[78px] animate-pulse border-divider border-b bg-row-hover" />
 );
 
-interface MatchProps {
+interface IMatchProps {
 	match: IMatch;
 	/** Whose line in the match to feature. */
 	puuid: string;
+	/** Whether this card's scoreboard is the one open. */
+	open: boolean;
+	/** Asks the list to open this card, or to close whatever is open. */
+	onToggle: () => void;
 }
 
-export const Match = (props: MatchProps) => {
-	const [showNotes, setNotes] = useState(false);
-	const matchData = toMatchState(props.match, props.puuid, null);
+/**
+ * One game: a row that scans in a second, opening into the full scoreboard.
+ *
+ * The row is a nine-column grid rather than a flex line, so the same figure
+ * sits at the same x on every card — a list of games is read down its columns,
+ * and a KDA that shifts left because the champion name above it is shorter
+ * defeats that entirely.
+ */
+export const Match = (props: IMatchProps) => {
+	const player = props.match.info.participants.find(
+		(participant) => participant.puuid === props.puuid,
+	);
 
-	const clickHandler = () => {
-		setNotes((prevState) => !prevState);
-	};
+	// A match the searched player is not in has nothing to feature; the page only
+	// ever passes their own games, so this is a guard, not a state.
+	if (!player) return null;
 
-	// A match the searched player is not in has nothing to feature; the page
-	// only ever passes their own games, so this is a guard, not a state.
-	if (!matchData.data) return null;
-
-	const { player, game } = matchData;
+	const game = props.match.info;
 	const won = player.win;
 	const ratio = kdaRatio(player.kills, player.deaths, player.assists);
 	const totalCs = player.totalMinionsKilled + player.neutralMinionsKilled;
-	const csPerMin = totalCs / (game.gameDuration / 60);
+	const csPerMin =
+		game.gameDuration > 0 ? totalCs / (game.gameDuration / 60) : 0;
+	const ResultIcon = won ? CircleCheckIcon : CircleXIcon;
+	const Chevron = props.open ? ChevronUpIcon : ChevronDownIcon;
+	// Riot's queue list is mostly retired rotating modes, so anything the map
+	// does not name falls back to the payload's own `gameMode`.
 	const queueName =
 		MATCH_QUEUE_NAMES[game.queueId] ?? formatGameMode(game.gameMode);
 
+	// Sorted once and handed to both the roster and the scoreboard, so the two
+	// cannot disagree about which player is in which lane.
+	const team100 = byPosition(
+		game.participants.filter((participant) => participant.teamId === 100),
+	);
+	const team200 = byPosition(
+		game.participants.filter((participant) => participant.teamId === 200),
+	);
+
+	// The whole row is the target — a 20px chevron is a poor thing to ask
+	// somebody to hit twenty times. The chevron stays a real button so the same
+	// action is reachable from the keyboard, which a div cannot offer on its own.
+	const keyHandler = (event: KeyboardEvent<HTMLDivElement>) => {
+		if (event.key !== "Enter" && event.key !== " ") return;
+		event.preventDefault();
+		props.onToggle();
+	};
+
 	return (
-		<div
-			// The frame is gold like every other card and the fill is the card's own,
-			// so a list of matches reads as one surface. The result is carried by the
-			// rail down the left edge and the word Victory/Defeat, which is there
-			// whether or not colour is perceived.
-			className="overflow-hidden rounded-xl border border-gold/25 bg-card/40 card-raised transition-colors hover:border-gold/50"
-		>
-			<div className="flex items-stretch">
+		<div className="border-divider border-b">
+			{/* biome-ignore lint/a11y/useSemanticElements: a <button> cannot contain the rune hover-card trigger, which is itself a button */}
+			<div
+				role="button"
+				tabIndex={0}
+				onClick={props.onToggle}
+				onKeyDown={keyHandler}
+				aria-expanded={props.open}
+				// Track sizing, left to right:
+				//
+				// The result leads, so the first thing read is what queue this was and
+				// whether it was won. The art follows at its own fixed widths — 52px for
+				// the portrait, 54px for the loadout, being two 25px slots either side
+				// of a 4px gap. Those are stated rather than left to `auto` so a track
+				// cannot drift from the thing sitting in it.
+				//
+				// The metrics column barely grows (0.3fr against its neighbours'
+				// 0.7-1.8): its three lines are a fixed shape at a fixed size, so
+				// anything it took beyond ~124px became empty space between it and the
+				// items, reading as padding on the items rather than as slack on the
+				// metrics. The width it gives up goes to the roster, which has ten names
+				// to fit and actually wants it.
+				//
+				// The items track's minimum is the block's real width — three 28px
+				// slots, two 4px gaps, then the trinket column: 124px. Anything less
+				// asked the grid to squeeze art that cannot be squeezed.
+				//
+				// Every flexible track stays `fr`-sized rather than `auto`: each card is
+				// its own grid, so a content-sized track would resolve differently on
+				// every card and the columns would stop lining up down the list.
+				className="grid cursor-pointer grid-cols-[4px_minmax(116px,0.78fr)_52px_54px_minmax(96px,0.7fr)_minmax(124px,0.3fr)_minmax(124px,0.7fr)_minmax(160px,1.8fr)_20px] items-center gap-3 py-4 transition-colors hover:bg-row-hover"
+			>
+				{/* The result twice over: a colour rail down the left edge for the scan,
+				    and the word itself beside it for anyone the colour does not reach.
+
+				    `self-stretch` overrides the row's `items-center` so the bar fills
+				    the content box, and the negative margin takes it most of the way
+				    back out over the row's own 16px padding — a grid item stretches to
+				    the content box, not the padding box. Most, not all: the 4px left
+				    over at each end keeps the bar clear of the dividers above and
+				    below, so consecutive wins read as separate games rather than as one
+				    continuous green rail down the list. */}
 				<div
-					className={cn("w-1 shrink-0", won ? "bg-emerald-400" : "bg-rose-400")}
+					className={cn("-my-3 self-stretch", won ? "bg-victory" : "bg-defeat")}
 				/>
 
-				{/* One row, no wrapping: the team block is already five rows tall and
-				    sets the card's height, so anything that wraps under it is free
-				    vertical space wasted. */}
-				<div className="flex flex-1 items-center gap-3 px-3 py-1.5">
-					<div className="w-24 shrink-0">
-						<p className="truncate font-medium text-[11px] text-muted-foreground leading-tight">
-							{queueName}
-						</p>
-						<p
-							className={cn(
-								"font-bold text-sm leading-tight",
-								won ? "text-emerald-300" : "text-rose-300",
-							)}
-						>
-							{won ? "Victory" : "Defeat"}
-						</p>
-						<p className="text-[10px] text-muted-foreground tabular-nums leading-tight">
-							{formatDuration(game.gameDuration)} ·{" "}
-							{formatRelativeTime(game.gameEndTimestamp)}
-						</p>
+				<div className="min-w-0">
+					<div
+						className={cn(
+							"flex items-center gap-[7px] font-semibold text-[15px]",
+							won ? "text-victory" : "text-defeat",
+						)}
+					>
+						<ResultIcon className="size-4 shrink-0" aria-hidden={true} />
+						{won ? "Victory" : "Defeat"}
 					</div>
-
-					<div className="flex shrink-0 items-center gap-1.5">
-						<div className="relative">
-							<MatchChampion
-								id={player.championId}
-								name={player.championName}
-								className="size-13 rounded-lg border border-white/10"
-							/>
-							<span className="absolute -right-1 -bottom-1 rounded-full bg-background px-1 font-semibold text-[9px] text-foreground tabular-nums ring-1 ring-white/15">
-								{player.champLevel}
-							</span>
-						</div>
-						<MatchSummonerSpells
-							spell1={player.summoner1Id}
-							spell2={player.summoner2Id}
-						/>
-						<MatchRunes
-							runes={player.perks.styles}
-							primaryId={player.perks.styles[0].style}
-							secondaryId={player.perks.styles[1].style}
-							statPerks={player.perks.statPerks}
-						/>
+					{/* The queue, not the champion: the portrait sits immediately to the
+					    right, so naming the champion here spent the cell's widest line
+					    repeating the picture beside it, and which queue a game was in is
+					    the one thing about it the row does not otherwise say. Truncated
+					    rather than wrapped — a rotating mode with a long name must not
+					    make one card taller than the rest of the list. */}
+					<div className="mt-[5px] truncate text-center font-mono text-[10px] text-ink-tertiary">
+						{queueName} · {formatDuration(game.gameDuration)}
 					</div>
-
-					{/* Two stacked columns rather than four blocks in a row: the same
-					    figures in about half the width, each value sitting over its own
-					    rate. */}
-					<div className="flex shrink-0 items-center gap-3">
-						<div className="flex w-20 flex-col gap-1">
-							<StatCell
-								value={
-									<>
-										{player.kills}
-										<span className="mx-0.5 text-muted-foreground">/</span>
-										<span className="text-rose-300">{player.deaths}</span>
-										<span className="mx-0.5 text-muted-foreground">/</span>
-										{player.assists}
-									</>
-								}
-								sub={ratio === null ? "Perfect KDA" : `${ratio.toFixed(2)} KDA`}
-							/>
-							<StatCell
-								value={player.visionScore}
-								sub="vision"
-								icon={<VisionIcon className="size-3 text-muted-foreground" />}
-								title="Vision score"
-							/>
-						</div>
-						<div className="flex w-16 flex-col gap-1">
-							<StatCell
-								value={totalCs}
-								sub={`${csPerMin.toFixed(1)} /min`}
-								icon={<MinionsIcon className="size-3 text-muted-foreground" />}
-								title="Minions and monsters killed"
-							/>
-							<StatCell
-								value={formatGold(player.goldEarned)}
-								sub={`${player.challenges.goldPerMinute.toFixed(0)} /min`}
-								icon={<GoldIcon className="size-3 text-muted-foreground" />}
-								title="Gold earned"
-							/>
-						</div>
-					</div>
-
-					<MatchItems
-						items={[
-							player.item0,
-							player.item1,
-							player.item2,
-							player.item3,
-							player.item4,
-							player.item5,
-							player.item6,
-						]}
-						questReward={player.roleBoundItem}
-					/>
-
-					{/* Dropped first when the row runs out of width — the stats above
-					    matter more on a narrow screen than the other nine players. The
-					    narrower stat block moved this from lg to md. */}
-					{/* The one child of the row allowed to shrink. Everything left of it is
-					    a fixed size, so when the row runs out of width this block gives up
-					    space and the names truncate — without `min-w-0` it would keep its
-					    content width, overflow, and be clipped by the card's rounded
-					    `overflow-hidden` right where the notes button starts. */}
-					<div className="ml-auto hidden min-w-0 pr-2 md:block">
-						<MatchTeams match={matchData} />
+					<div className="mt-[3px] whitespace-nowrap font-mono text-[10px] text-ink-faint">
+						{formatRelativeTime(game.gameEndTimestamp).toUpperCase()} ·{" "}
+						{formatMatchDate(game.gameEndTimestamp)}
 					</div>
 				</div>
+
+				<div className="relative size-[52px]">
+					<MatchChampion
+						id={player.championId}
+						name={player.championName}
+						className="size-[52px] border border-control"
+					/>
+					<span className="absolute -right-px -bottom-px border border-control bg-surface px-[3px] font-mono text-[9px] text-ink-secondary">
+						{player.champLevel}
+					</span>
+				</div>
+
+				<MatchLoadout player={player} size="card" />
+
+				<div className="text-center">
+					<div className="whitespace-nowrap font-mono text-[15px] text-ink">
+						{player.kills} / {player.deaths} / {player.assists}
+					</div>
+					<div className="mt-[5px] font-mono text-[10px] text-ink-muted">
+						{ratio === null ? "PERFECT" : `${ratio.toFixed(2)} KDA`}
+					</div>
+				</div>
+
+				<div className="flex flex-col gap-1 whitespace-nowrap font-mono text-[10.5px] text-ink-tertiary">
+					<div className="flex items-center gap-1.5">
+						<MinionsIcon
+							className="size-[13px] shrink-0 text-cs"
+							aria-hidden={true}
+						/>
+						{totalCs} CS · {csPerMin.toFixed(1)}/m
+					</div>
+					<div className="flex items-center gap-1.5">
+						<GoldIcon
+							className="size-[13px] shrink-0 text-gold"
+							aria-hidden={true}
+						/>
+						{formatGold(player.goldEarned)} ·{" "}
+						{player.challenges?.goldPerMinute.toFixed(0) ?? "—"}/m
+					</div>
+					<div className="flex items-center gap-1.5">
+						<VisionIcon
+							className="size-[13px] shrink-0 text-vision"
+							aria-hidden={true}
+						/>
+						{player.visionScore} VISION
+					</div>
+				</div>
+
+				<MatchItems
+					items={[
+						player.item0,
+						player.item1,
+						player.item2,
+						player.item3,
+						player.item4,
+						player.item5,
+						player.item6,
+					]}
+					questReward={player.roleBoundItem}
+					size="card"
+				/>
+
+				<MatchRoster
+					team100={team100}
+					team200={team200}
+					searchedPuuid={props.puuid}
+				/>
 
 				<button
 					type="button"
-					onClick={clickHandler}
-					aria-expanded={showNotes}
-					aria-label={showNotes ? "Hide notes" : "Show notes"}
-					className="flex w-8 shrink-0 items-center justify-center border-gold/15 border-l transition-colors hover:bg-gold/10"
+					onClick={(event) => {
+						// The row already handles the click; without this the toggle fires
+						// twice and the card closes as fast as it opened.
+						event.stopPropagation();
+						props.onToggle();
+					}}
+					aria-expanded={props.open}
+					aria-label={props.open ? "Hide scoreboard" : "Show scoreboard"}
+					className="justify-self-end text-ink-muted transition-colors hover:text-ink"
 				>
-					<ChevronDown
-						className={cn(
-							"size-4 text-muted-foreground transition-transform duration-200",
-							showNotes && "rotate-180",
-						)}
-					/>
+					<Chevron className="size-5" aria-hidden={true} />
 				</button>
 			</div>
 
-			{showNotes && (
-				<div className="border-gold/15 border-t bg-background/40 p-4">
-					<div className="flex flex-row text-center">
-						<div className="w-1/4">
-							<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-								MatchChampion Knowledge
-							</p>
-							<ul className="mt-1 text-sm">
-								{matchData.notes
-									? matchData.notes.champion_knowledge.map((note, index) => (
-											// biome-ignore lint/suspicious/noArrayIndexKey: notes are read-only today; key on a note id once they come from the backend
-											<li key={index}>{note}</li>
-										))
-									: "..."}
-							</ul>
-						</div>
-						<div className="w-1/4">
-							<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-								Laning
-							</p>
-						</div>
-						<div className="w-1/4">
-							<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-								Teamfighting
-							</p>
-						</div>
-						<div className="w-1/4">
-							<p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
-								Macro
-							</p>
-						</div>
-					</div>
-					<form className="m-auto mt-4 flex flex-col items-center">
-						<div className="flex flex-row items-center justify-center py-2">
-							<Label className="w-20 px-2" htmlFor="tags">
-								Category
-							</Label>
-							<Select name="tags" defaultValue="MatchChampion Knowledge">
-								<SelectTrigger id="tags" className="w-64">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="MatchChampion Knowledge">
-										MatchChampion Knowledge
-									</SelectItem>
-									<SelectItem value="Laning">Laning</SelectItem>
-									<SelectItem value="Team Fighting">Team Fighting</SelectItem>
-									<SelectItem value="Macro">Macro</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-						<div className="flex flex-row justify-center py-2">
-							<Label className="w-20 px-2 pt-2" htmlFor="note">
-								Note
-							</Label>
-							<Textarea className="h-20 w-64" name="note" id="note" />
-						</div>
-						<Button type="button">Add Note</Button>
-					</form>
-				</div>
+			{props.open && (
+				<MatchScoreboard
+					team100={team100}
+					team200={team200}
+					searchedPuuid={props.puuid}
+					gameDuration={game.gameDuration}
+				/>
 			)}
 		</div>
 	);
