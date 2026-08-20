@@ -9,6 +9,6 @@ import { AccountService } from "./account.service.ts";
 	imports: [RiotModule],
 	controllers: [AccountController],
 	providers: [AccountService, AccountRepository],
-	exports: [AccountService],
+	exports: [AccountService, AccountRepository],
 })
 export class AccountModule {}

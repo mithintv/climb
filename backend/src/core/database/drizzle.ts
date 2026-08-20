@@ -1,6 +1,8 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { Pool } from "pg";
 
+import { accountMatchSync } from "./models/account-match-sync.model.ts";
+import { accountMatches } from "./models/account-matches.model.ts";
 import { accounts } from "./models/accounts.model.ts";
 import { gameMaps } from "./models/game-maps.model.ts";
 import { gameModes } from "./models/game-modes.model.ts";
@@ -23,6 +25,8 @@ import { perks } from "./models/perks.model.ts";
  * must be added here too.
  */
 const schema = {
+	accountMatchSync,
+	accountMatches,
 	accounts,
 	gameMaps,
 	gameModes,

@@ -38,6 +38,16 @@ export class AccountRepository {
 	}
 
 	/**
+	 * Looks an account up by puuid, which is unique — unlike the riot id, so this
+	 * one needs no tie-break and can return at most one row.
+	 */
+	async findByPuuid(puuid: string) {
+		return this.db.query.accounts.findFirst({
+			where: eq(accounts.puuid, puuid),
+		});
+	}
+
+	/**
 	 * Inserts or refreshes an account. Conflicts resolve on `puuid`, never on the
 	 * name, so a rename updates the existing row instead of creating a second one.
 	 */

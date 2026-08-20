@@ -15,6 +15,13 @@
 			"when": 1787185674972,
 			"tag": "0001_create_matches",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1787188858906,
+			"tag": "0002_create_account_matches",
+			"breakpoints": true
 		}
 	]
 }
