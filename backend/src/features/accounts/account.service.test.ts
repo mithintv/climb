@@ -1,12 +1,8 @@
-import { DatabaseSync } from "node:sqlite";
-
 import { Test } from "@nestjs/testing";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createTestDatabase } from "./../../core/database/create-test-database.ts";
 import { DRIZZLE } from "./../../core/database/database.constant.ts";
-import { applyConnectionPragmas } from "./../../core/database/db.utils.ts";
-import { createDrizzle } from "./../../core/database/drizzle.ts";
-import { runMigrations } from "./../../core/database/run-migrations.ts";
 import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import type { IRiotAccount } from "./../../integrations/riot/types/i-riot-account.type.ts";
 import { RIOT_ID_TTL_MS } from "./account.constant.ts";
@@ -21,18 +17,18 @@ const SNEAKY: IRiotAccount = {
 
 let service: AccountService;
 let fetchAccount: ReturnType<typeof vi.fn>;
+let teardown: () => Promise<void>;
 
 beforeEach(async () => {
-	const database = new DatabaseSync(":memory:");
-	applyConnectionPragmas(database);
-	const db = createDrizzle(database);
-	await runMigrations(db, database);
+	const database = await createTestDatabase();
+	const db = database.db;
+	teardown = database.teardown;
 
 	fetchAccount = vi.fn(async () => SNEAKY);
 
 	// Resolved through Nest's own container rather than `new`, so a provider
 	// missing from a module fails here instead of at boot. Only the Riot client
-	// is substituted; the repository is the real one, over an in-memory database.
+	// is substituted; the repository is the real one, over a real database.
 	const moduleRef = await Test.createTestingModule({
 		providers: [AccountService, AccountRepository],
 	})
@@ -44,6 +40,8 @@ beforeEach(async () => {
 
 	service = moduleRef.get(AccountService);
 });
+
+afterEach(() => teardown());
 
 describe("isRiotIdFresh", () => {
 	it("is false exactly at the TTL, so the boundary refetches", () => {

@@ -28,9 +28,13 @@
 		"allowImportingTsExtensions": true,
 		"rewriteRelativeImportExtensions": true,
 		"verbatimModuleSyntax": false,
-		"rootDir": "./src",
 		"tsBuildInfoFile": "./dist/.tsbuildinfo"
 	},
-	"include": ["src"],
+	// The config files at the package root are covered too, so the editor gives
+	// them Node's types — `drizzle.config.ts` reads `process.env`, and outside a
+	// project tsc checks it with no types at all and reports `process` as
+	// undefined. `rootDir` lives in tsconfig.build.json rather than here,
+	// because it would reject these files for sitting outside `src`.
+	"include": ["src", "drizzle.config.ts", "vitest.config.ts"],
 	"exclude": ["node_modules", "dist"]
 }

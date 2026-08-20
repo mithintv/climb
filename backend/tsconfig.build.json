@@ -1,7 +1,16 @@
 // Build-only overrides. Two configs exist because the project checks more than
-// it emits: tsconfig.json covers all of src (so the editor and `pnpm typecheck`
-// see errors in tests), while this one drops the tests so they never reach dist.
+// it emits: tsconfig.json covers all of src plus the root config files (so the
+// editor and `pnpm typecheck` see errors in tests and in drizzle.config.ts),
+// while this one narrows to the code that ships.
+//
+// `rootDir` is set here, not in tsconfig.json, so that `dist/` mirrors `src/`
+// — without it tsc infers the common root, and the config files above would
+// push everything down into `dist/src/`.
 {
 	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "./src"
+	},
+	"include": ["src"],
 	"exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

@@ -13,6 +13,9 @@ const bootstrap = async () => {
 
 	app.useLogger(app.get(Logger));
 	app.enableCors({ origin: ["http://localhost:5173"] });
+	// Without this Nest never calls onApplicationShutdown, so the Postgres pool
+	// keeps its sockets open and the process outlives the signal that killed it.
+	app.enableShutdownHooks();
 
 	const port = Number(process.env.PORT) || 3080;
 	await app.listen(port);

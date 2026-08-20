@@ -7,12 +7,12 @@ import {
 	Query,
 } from "@nestjs/common";
 
-import type { IAccountRow } from "./../../core/database/schema.ts";
+import type { AccountRow } from "./../../core/database/types/account-row.type.ts";
 import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import { AccountService } from "./account.service.ts";
 
 /** The response shape for an account, in the API's own casing. */
-const toResponse = (account: IAccountRow) => ({
+const toResponse = (account: AccountRow) => ({
 	puuid: account.puuid,
 	gameName: account.gameName,
 	tagLine: account.tagLine,

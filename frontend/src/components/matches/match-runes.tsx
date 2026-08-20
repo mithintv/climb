@@ -4,22 +4,20 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/ui/hover-card";
 
 import type { IPerkStyle } from "../../types/riot/i-perk-style.type";
 import { MATCH_RUNE_STAT_SHARDS } from "./constants/match-rune-stat-shard.constant";
+import { runeIconUrl } from "./match-runes.utils";
 
 interface Rune {
 	id: number;
-	icon: string;
+	/** Data Dragon key, e.g. "DarkHarvest"; the committed icon is named after it. */
+	key: string;
 	name: string;
 }
 
 interface RuneTree {
 	id: number;
+	key: string;
 	name: string;
-	icon: string;
 }
-
-// Rune icons are the one Data Dragon path that is not versioned.
-const runeImage = (rune: { icon: string }) =>
-	`https://ddragon.leagueoflegends.com/cdn/img/${rune.icon}`;
 
 interface MatchRunesProps {
 	runes: IPerkStyle[];
@@ -85,13 +83,13 @@ export const MatchRunes = (props: MatchRunesProps) => {
 			>
 				<img
 					className="size-6.5 rounded-full bg-black/40"
-					src={runeImage(keystone)}
+					src={runeIconUrl(keystone.key)}
 					alt=""
 					loading="lazy"
 				/>
 				<img
 					className="size-4.5 opacity-80"
-					src={runeImage(secondaryTree)}
+					src={runeIconUrl(secondaryTree.key)}
 					alt=""
 					loading="lazy"
 				/>
@@ -129,7 +127,7 @@ const RuneTreeDetail = (props: RuneTreeDetailProps) => (
 				<li key={rune.id} className="flex items-center gap-2">
 					<img
 						className="size-5 shrink-0 rounded-full bg-black/40"
-						src={runeImage(rune)}
+						src={runeIconUrl(rune.key)}
 						alt=""
 						loading="lazy"
 					/>

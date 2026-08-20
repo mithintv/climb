@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 
-import type { IAccountRow } from "./../../core/database/schema.ts";
+import type { AccountRow } from "./../../core/database/types/account-row.type.ts";
 import { RIOT_ROUTING_REGION } from "./../../integrations/riot/riot-api.constant.ts";
 import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
 import { RIOT_ID_TTL_MS } from "./account.constant.ts";
@@ -32,7 +32,7 @@ export class AccountService {
 		gameName: string,
 		tagLine: string,
 		now: number = Date.now(),
-	): Promise<{ account: IAccountRow; cached: boolean }> {
+	): Promise<{ account: AccountRow; cached: boolean }> {
 		const cached = await this.accounts.findByRiotId(gameName, tagLine);
 		if (cached && isRiotIdFresh(cached.riotIdCheckedAt, now)) {
 			return { account: cached, cached: true };

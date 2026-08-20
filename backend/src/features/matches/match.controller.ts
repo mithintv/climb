@@ -2,19 +2,23 @@ import {
 	BadRequestException,
 	Controller,
 	Get,
+	Header,
 	Logger,
 	Param,
 	Query,
 } from "@nestjs/common";
 
 import { RiotApiService } from "./../../integrations/riot/riot-api.service.ts";
+import { MatchService } from "./match.service.ts";
 
 @Controller("matches")
 export class MatchController {
 	private readonly logger = new Logger(MatchController.name);
+	private readonly matches: MatchService;
 	private readonly riot: RiotApiService;
 
-	constructor(riot: RiotApiService) {
+	constructor(matches: MatchService, riot: RiotApiService) {
+		this.matches = matches;
 		this.riot = riot;
 	}
 
@@ -43,11 +47,20 @@ export class MatchController {
 		return matchIds;
 	}
 
-	/** `GET /matches/:matchId` — one full match payload. */
+	/**
+	 * `GET /matches/:matchId` — one full match payload. The first request saves
+	 * it; every later one reads it back out of the database.
+	 *
+	 * The body is passed through as the characters Riot sent rather than
+	 * re-serialised, so the header has to be set by hand: Nest sends a string
+	 * response as `text/html` otherwise, and a caller would have to parse a
+	 * payload the content type says is markup.
+	 */
 	@Get(":matchId")
+	@Header("Content-Type", "application/json")
 	async getMatch(@Param("matchId") matchId: string) {
-		const match = await this.riot.fetchMatch(matchId);
-		this.logger.debug(`Fetched match data for ${matchId}`);
-		return match;
+		const { body, source } = await this.matches.getMatchBody(matchId);
+		this.logger.debug(`Served match ${matchId} from ${source}`);
+		return body;
 	}
 }

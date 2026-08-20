@@ -1,7 +1,7 @@
-import type { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 
-import { migrate } from "drizzle-orm/sqlite-proxy/migrator";
+import { sql } from "drizzle-orm";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 
 import type { Drizzle } from "./drizzle.ts";
 
@@ -21,48 +21,38 @@ const MIGRATIONS_FOLDER = fileURLToPath(
  * Applies any migration the database has not recorded yet, and returns how many
  * ran. Safe on every boot: an up-to-date database applies nothing.
  *
- * drizzle tracks what it has applied in its own `__drizzle_migrations` table,
- * so the files under `src/database/migrations/` are the only record that matters —
+ * drizzle tracks what it has applied in `drizzle.__drizzle_migrations`, so the
+ * files under `src/core/database/migrations/` are the only record that matters —
  * they are generated from `schema.ts` and must not be hand-edited.
  */
-export const runMigrations = async (db: Drizzle, database: DatabaseSync) => {
-	const before = appliedCount(database);
+export const runMigrations = async (db: Drizzle) => {
+	const before = await appliedCount(db);
 
-	// The proxy dialect hands the whole migration over as a list of statements
-	// and leaves running them to us. They go in one transaction so a migration
-	// that fails half way leaves nothing behind.
-	await migrate(
-		db,
-		async (queries) => {
-			database.exec("BEGIN");
-			try {
-				for (const query of queries) database.exec(query);
-				database.exec("COMMIT");
-			} catch (error) {
-				database.exec("ROLLBACK");
-				throw error;
-			}
-		},
-		{ migrationsFolder: MIGRATIONS_FOLDER },
-	);
+	// The node-postgres migrator runs each file in its own transaction, so a
+	// migration that fails half way leaves nothing behind.
+	await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
 
-	return { applied: appliedCount(database) - before };
+	return { applied: (await appliedCount(db)) - before };
 };
 
 /**
- * Reads drizzle's own bookkeeping table. It does not exist until the first
- * migration runs, hence the guard rather than a plain count.
+ * Reads drizzle's own bookkeeping table, which does not exist until the first
+ * migration runs.
+ *
+ * The existence check is its own statement rather than a branch inside one:
+ * Postgres resolves every table named anywhere in a statement while parsing it,
+ * so a `CASE` that never evaluates the count still fails on the missing table.
  */
-const appliedCount = (database: DatabaseSync) => {
-	const table = database
-		.prepare(
-			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'",
-		)
-		.get();
-	if (!table) return 0;
+const appliedCount = async (db: Drizzle) => {
+	const { rows: found } = await db.execute<{ tableOid: number | null }>(
+		sql`SELECT to_regclass('drizzle.__drizzle_migrations')::oid AS "tableOid"`,
+	);
+	if (!found[0]?.tableOid) return 0;
 
-	const row = database
-		.prepare("SELECT COUNT(*) AS applied FROM __drizzle_migrations")
-		.get() as { applied: number };
-	return row.applied;
+	// COUNT(*) is bigint, which node-postgres returns as a string rather than
+	// silently losing precision.
+	const { rows } = await db.execute<{ applied: string }>(
+		sql`SELECT COUNT(*) AS applied FROM drizzle.__drizzle_migrations`,
+	);
+	return Number(rows[0]?.applied ?? 0);
 };

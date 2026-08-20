@@ -61,9 +61,14 @@ export class RiotApiService {
 		);
 	}
 
-	/** One full match-v5 payload. */
-	async fetchMatch(matchId: string) {
-		return this.http.get(
+	/**
+	 * One full match-v5 payload, as the characters Riot sent rather than a parsed
+	 * object. A completed match is saved whole and byte-exact, and only what is
+	 * stored unparsed can be returned unchanged; callers that need the fields
+	 * parse it themselves.
+	 */
+	async fetchMatchBody(matchId: string): Promise<string> {
+		return this.http.getText(
 			`${RIOT_REGIONAL_HOST}/lol/match/v5/matches/${encodeURIComponent(matchId)}`,
 			this.config,
 		);
