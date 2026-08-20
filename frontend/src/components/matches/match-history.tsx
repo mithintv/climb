@@ -1,14 +1,9 @@
-import { useState } from "react";
-
 import { MATCH_PAGE_SIZE } from "@/components/summoner/use-summoner";
 import type { IMatch } from "@/types/riot/i-match.type";
 
-import { MatchHistoryFilterBar } from "./match-history-filter-bar";
+import { RANKED_SOLO_QUEUE_ID } from "./constants/ranked-solo-queue.constant";
+import { MatchHistoryHeader } from "./match-history-header";
 import { MatchList } from "./match-list";
-import {
-	MATCH_HISTORY_FILTERS,
-	type MatchHistoryFilter,
-} from "./types/match-history-filter.type";
 
 interface IMatchHistoryProps {
 	puuid: string;
@@ -21,33 +16,25 @@ interface IMatchHistoryProps {
 }
 
 /**
- * The right-hand pane: the filter bar, and the games under it.
+ * The right-hand pane: the header, and the ranked solo/duo games under it.
  *
- * The bar is pinned and only the list scrolls, so the queue you have filtered
- * to is still stated when you are forty games down.
+ * The header is pinned and only the list scrolls, so the queue the list holds
+ * is still stated when you are forty games down.
  *
- * The filter narrows the games already loaded rather than asking the backend
- * for a queue — `match-v5` takes a `queue` parameter that the backend's index
- * does not pass through yet. The visible consequence is that filtering to a
- * rare queue can empty a full page, and "load more" fetches the next ten of
- * everything rather than the next ten of that queue.
+ * The queue is applied to the games already loaded rather than asked of the
+ * backend — `match-v5` takes a `queue` parameter that the backend's index does
+ * not pass through yet. The visible consequence is that a page of ten games can
+ * arrive holding two solo queue games, and "load more" fetches the next ten of
+ * everything rather than the next ten ranked.
  */
 export const MatchHistory = (props: IMatchHistoryProps) => {
-	const [filterId, setFilterId] = useState<MatchHistoryFilter>("all");
-	const filter = MATCH_HISTORY_FILTERS.find((entry) => entry.id === filterId);
-	const queueIds = filter?.queueIds;
-
-	// Widened from the constant's literal tuple, which `includes` would otherwise
-	// only accept its own literal members against.
-	const shown = queueIds
-		? props.matches.filter((match) =>
-				(queueIds as readonly number[]).includes(match.info.queueId),
-			)
-		: props.matches;
+	const shown = props.matches.filter(
+		(match) => match.info.queueId === RANKED_SOLO_QUEUE_ID,
+	);
 
 	return (
 		<section className="lg:grid lg:min-h-0 lg:grid-rows-[auto_1fr] lg:overflow-hidden">
-			<MatchHistoryFilterBar value={filterId} onChange={setFilterId} />
+			<MatchHistoryHeader />
 
 			{/* Scrolls in both directions: the card's columns need about 880px before
 			    the figures start colliding, and a narrow window is better served by

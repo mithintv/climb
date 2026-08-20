@@ -1,11 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-	ListOrderedIcon,
-	RadioIcon,
-	ShieldIcon,
-	SwordsIcon,
-	UserIcon,
-} from "lucide-react";
+import { RadioIcon, ShieldIcon, SwordsIcon, UserIcon } from "lucide-react";
 
 import { ITEM_VERSION } from "@/components/items/constants/item-version.constant";
 import { SummonerSearchField } from "@/components/summoner/summoner-search-field";
@@ -22,7 +16,7 @@ const shortPatch = (version: string) =>
 	version.split(".").slice(0, 2).join(".");
 
 /**
- * The bar every page sits under: wordmark, the four destinations, a summoner
+ * The bar every page sits under: wordmark, the three destinations, a summoner
  * lookup, and which realm and patch the numbers below come from.
  *
  * Exactly 60px tall and never scrolls, which is what lets the profile page
@@ -63,7 +57,6 @@ export const AppHeader = () => {
 					label="Items"
 				/>
 				<AppHeaderNavLink to="/champions" icon={SwordsIcon} label="Champions" />
-				<AppHeaderNavLink to="/ladder" icon={ListOrderedIcon} label="Ladder" />
 			</nav>
 
 			<div className="flex-1" />

@@ -37,11 +37,8 @@ export const parseTypedRiotId = (typed: string, defaultTagLine: string) => {
 	return { gameName, tagLine: tagLine || defaultTagLine };
 };
 
-/** The queue whose rank a profile leads with. */
+/** The one queue a profile reports: everything on the page is solo/duo. */
 export const SOLO_QUEUE = "RANKED_SOLO_5x5";
-
-/** The second ranked queue, shown under solo whether or not it is played. */
-export const FLEX_QUEUE = "RANKED_FLEX_SR";
 
 /** Picks solo queue if it is there, else the first queue with any games. */
 export const primaryEntry = (entries: ILeagueEntry[]) =>

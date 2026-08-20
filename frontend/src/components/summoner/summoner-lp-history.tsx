@@ -22,8 +22,6 @@ interface ISummonerLpHistoryProps {
  *
  * Open by default: it is the one thing on the rail that answers "am I climbing"
  * rather than "where am I", and a reader who does not want it can shut it.
- * Its open state is deliberately independent of the queue toggle above — the
- * panel is a preference about the rail, not about a queue.
  */
 export const SummonerLpHistory = (props: ISummonerLpHistoryProps) => {
 	const [open, setOpen] = useState(true);

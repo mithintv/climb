@@ -34,6 +34,7 @@ export const MatchRoster = (props: IMatchRosterProps) => {
 				const left = props.team100[row];
 				const right = props.team200[row];
 				const lane = MATCH_LANE_ICONS[row];
+				const LaneIcon = lane?.Icon;
 
 				return (
 					// The pair is the row, so it keys on both puuids — either one alone
@@ -52,14 +53,15 @@ export const MatchRoster = (props: IMatchRosterProps) => {
 						{/* Decorative: the row it labels already names both players. Only
 						    present for the five summoner's rift positions — a mode with
 						    more rows leaves the column blank rather than inventing lanes. */}
-						{lane ? (
-							<img
-								className="size-[13px] justify-self-center opacity-60"
-								src={lane.url}
-								alt=""
+						{LaneIcon ? (
+							// The title sits on the wrapper rather than the icon: the svg is
+							// decorative and hidden, and a hidden element carries no tooltip.
+							<span
+								className="justify-self-center text-ink-label"
 								title={lane.position}
-								loading="lazy"
-							/>
+							>
+								<LaneIcon className="size-[13px]" />
+							</span>
 						) : (
 							<div />
 						)}
